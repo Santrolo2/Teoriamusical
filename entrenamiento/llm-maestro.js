@@ -8,7 +8,7 @@
     const config = {
         baseUrl: typeof window !== "undefined" && window.MAESTRO_IA_URL
             ? window.MAESTRO_IA_URL
-            : "http://localhost:3001",
+            : "", // Vercel API is local to the same domain now
         timeoutMs: 25000
     };
 
