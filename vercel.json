@@ -1,9 +1,5 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/modulos/entrenamiento/identificacion-acordes/identificacion-acordes.html",
-      "permanent": false
-    }
+  "rewrites": [
+    { "source": "/api/maestro", "destination": "/api/maestro.js" }
   ]
 }
