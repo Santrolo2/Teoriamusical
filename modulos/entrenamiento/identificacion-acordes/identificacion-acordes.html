@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Identificación de acordes</title>
+
+<link rel="stylesheet" href="./estilo.css">
+
+</head>
+
+<body>
+
+<div class="app-layout">
+
+<main class="main-panel">
+
+<header class="exercise-header">
+
+<div class="exercise-title">
+<h1>Identificación de acordes</h1>
+</div>
+
+<div class="mode-controls">
+
+<span id="modeLabel">Modo entrenador</span>
+
+<button id="modeToggle">
+Cambiar modo
+</button>
+
+<div id="modeHint">
+Entrenamiento adaptativo
+</div>
+
+</div>
+
+</header>
+
+<section id="modeControlsHost"></section>
+
+<section class="compact-core">
+
+<div class="compact-staff-section">
+
+<div class="compact-chord-info">
+
+<div id="chordName">
+Acorde oculto
+</div>
+
+<div id="chordType">
+Identifica el acorde
+</div>
+
+<div id="chordInversion">
+Grand staff
+</div>
+
+</div>
+
+<!-- PENTAGRAMA -->
+
+<div id="stave" class="stave-host"></div>
+
+<div class="staff-actions">
+
+<button id="skipBtn">
+Omitir
+</button>
+
+<button id="nextBtn">
+Siguiente
+</button>
+
+</div>
+
+<div class="compact-feedback">
+
+<div id="feedback" class="feedback"></div>
+
+<div id="hintBox" class="hint-text">
+Sin pista.
+</div>
+
+</div>
+
+</div>
+
+<div class="options-column">
+
+<section class="compact-options-section">
+
+<h3>Opciones</h3>
+
+<div id="optionsContainer" class="compact-options-grid"></div>
+
+</section>
+
+<section class="compact-options-section">
+
+<h3>Contexto</h3>
+
+<div id="exerciseContext"></div>
+
+</section>
+
+</div>
+
+</section>
+
+</main>
+
+<aside class="sidebar">
+
+<div class="stats-header">
+
+<span>Diagnóstico</span>
+
+<span id="sessionModeBadge">
+Entrenador
+</span>
+
+</div>
+
+<section class="sidebar-section">
+
+<h3>Progreso</h3>
+
+<div class="progress-bar">
+
+<div id="progressFill" class="progress-fill"></div>
+
+</div>
+
+<div id="statsSummary"></div>
+
+</section>
+
+<section class="sidebar-section">
+
+<h3>Fortalezas</h3>
+
+<div id="strengthsBox"></div>
+
+</section>
+
+<section class="sidebar-section">
+
+<h3>Debilidades</h3>
+
+<div id="weaknessesBox"></div>
+
+</section>
+
+<section class="sidebar-section">
+
+<h3>Recomendación</h3>
+
+<div id="recommendationBox"></div>
+
+</section>
+
+<section class="sidebar-section maestro-section">
+
+<button id="maestroBtn" class="maestro-btn">
+  Consultar al Maestro
+</button>
+
+<div id="maestroPanel" class="maestro-panel hidden">
+  <div class="maestro-panel-header">
+    <span>Maestro de Música</span>
+    <button id="maestroClose" class="maestro-close">×</button>
+  </div>
+  <div id="maestroContent" class="maestro-content">
+    <p class="maestro-placeholder">Haz clic en "Consultar al Maestro" para recibir retroalimentación personalizada basada en tu experiencia.</p>
+  </div>
+  <div id="maestroLoading" class="maestro-loading hidden">Pensando...</div>
+  <div id="maestroError" class="maestro-error hidden"></div>
+</div>
+
+</section>
+
+</aside>
+
+</div>
+
+<!-- VEXFLOW -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vexflow/4.2.3/vexflow-min.js"></script>
+
+<!-- TEORIA -->
+
+<script src="../../../core/teoria/notas.js"></script>
+<script src="../../../core/teoria/intervalos.js"></script>
+<script src="../../../core/teoria/escalas.js"></script>
+<script src="../../../core/teoria/tonalidades.js"></script>
+<script src="../../../core/teoria/tipos-acorde.js"></script>
+<script src="../../../core/teoria/inversiones.js"></script>
+<script src="../../../core/teoria/acordes.js"></script>
+<script src="../../../core/teoria/teoria.js"></script>
+
+<!-- NOTACION -->
+
+<script src="../../../core/notacion/vexflow-setup.js"></script>
+
+<!-- PERFIL -->
+
+<script src="../../../entrenamiento/perfil.js"></script>
+<script src="../../../entrenamiento/perfil-pedagogico.js"></script>
+
+<!-- IA -->
+
+<script src="../../../entrenamiento/ai-engine.js"></script>
+<script src="../../../entrenamiento/llm-maestro.js"></script>
+
+<!-- GENERACION -->
+
+<script src="../../../entrenamiento/generador-ejercicios.js"></script>
+<script src="../../../entrenamiento/evaluador-respuesta.js"></script>
+<script src="../../../entrenamiento/analizador-error.js"></script>
+<script src="../../../entrenamiento/pistas.js"></script>
+
+<!-- MODULO -->
+
+<script src="./identificacion-acordes.js"></script>
+<script src="./app.js"></script>
+
+</body>
+</html>
