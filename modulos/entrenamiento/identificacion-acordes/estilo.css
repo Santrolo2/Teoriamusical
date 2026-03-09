@@ -699,78 +699,164 @@ button {
 }
 
 @media (max-width: 720px) {
+    /* Hide sidebar completely on mobile — zero-scroll design */
+    .sidebar {
+        display: none !important;
+    }
+
     .app-layout {
-        padding: 10px;
-        gap: 16px;
+        grid-template-columns: 1fr;
+        padding: 6px;
+        gap: 0;
+    }
+
+    body {
+        padding: 0;
+        overflow: hidden; /* prevent bouncing scroll */
+    }
+
+    .main-panel {
+        min-height: 0;
+        padding: 6px 8px;
+        gap: 5px;
+        overflow: hidden;
+        height: 100dvh; /* fill the entire phone viewport */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* ─── Header: title + mode toggle ─── */
+    .exercise-header {
+        border-bottom: 2px solid #722f37;
+        padding-bottom: 4px;
+        margin-bottom: 0;
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+
+    .exercise-title h1 {
+        font-size: 1.1rem;
+    }
+
+    .mode-controls {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+        min-width: 0;
+        padding: 5px 8px;
+        gap: 6px;
+    }
+
+    #modeLabel { font-size: 0.72rem; }
+    #modeHint  { display: none; }
+
+    #modeToggle {
+        min-height: 32px;
+        padding: 3px 10px;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+
+    /* ─── Context card (tonalidad, inversión) ─── */
+    .context-card {
+        padding: 4px 8px;
+        font-size: 0.78rem;
+    }
+
+    /* ─── Staff: shorter and centred ─── */
+    .compact-staff-section {
+        padding: 0;
+        min-height: 0;
+        flex-shrink: 0;
+    }
+
+    .stave-host {
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        max-height: 110px;
+    }
+
+    .stave-host svg {
+        max-width: 100%;
+        max-height: 110px;
+        height: auto;
+    }
+
+    /* ─── Skip / Omitir actions ─── */
+    .staff-actions {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    #skipBtn, #nextBtn {
+        flex: 1;
+        min-height: 36px;
+        font-size: 0.82rem;
+        padding: 4px;
+    }
+
+    /* ─── Root buttons: 6-column grid ─── */
+    .root-selector-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+    }
+
+    .root-btn {
+        min-height: 38px;
+        font-size: 0.82rem;
+        padding: 4px 2px;
+    }
+
+    /* ─── Type buttons: 3×3 grid ─── */
+    .type-selector-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        flex-direction: unset;
+    }
+
+    .type-btn {
+        flex: unset;
+        min-height: 42px;
+        font-size: 0.78rem;
+        padding: 4px 2px;
+        line-height: 1.2;
+    }
+
+    /* ─── Evaluate button ─── */
+    .evaluate-btn {
+        min-height: 42px;
+        padding: 6px;
+        font-size: 0.9rem;
+    }
+
+    /* ─── Root-visibility toggle (hide on mobile, not needed) ─── */
+    #rootVisibilityToggle {
+        display: none !important;
+    }
+
+    /* ─── Maestro IA section: compact ─── */
+    .maestro-section {
+        margin-top: 4px;
+    }
+
+    .maestro-btn {
+        padding: 7px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* ─── Options column fills width ─── */
+    .options-column {
+        width: 100%;
     }
 
     .compact-core {
         display: flex;
         flex-direction: column;
-        gap: 16px;
-    }
-
-    .options-column {
-        width: 100%;
-    }
-
-    .root-selector-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-    }
-    
-    .type-selector-grid {
-        flex-direction: column;
-    }
-
-    .type-btn {
-        flex: 1 1 100%;
-        min-height: 54px; /* Fat finger friendly */
-        font-size: 1.05rem;
-    }
-
-    .root-btn {
-        min-height: 48px; /* Fat finger friendly */
-        font-size: 1rem;
-    }
-
-    .staff-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    #skipBtn, #nextBtn {
-        width: 100%;
-        min-height: 48px;
-    }
-
-    .evaluate-btn {
-        min-height: 54px;
-        padding: 16px;
-    }
-
-    .mode-controls {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-        text-align: center;
-    }
-
-    #modeToggle {
-        width: 100%;
-        margin-top: 8px;
-        min-height: 44px;
-    }
-
-    .compact-staff-section {
-        min-height: auto;
-        padding: 12px;
-    }
-    
-    .stave-host {
-        padding: 0;
-        margin: 0;
+        gap: 5px;
+        flex: 1;
         overflow: hidden;
     }
 }
