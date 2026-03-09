@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/modulos/entrenamiento/identificacion-acordes/identificacion-acordes.html",
+      "permanent": false
+    }
+  ]
+}
