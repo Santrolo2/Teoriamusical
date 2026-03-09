@@ -1,5 +1,13 @@
 {
-  "rewrites": [
-    { "source": "/api/maestro", "destination": "/api/maestro.js" }
+  "version": 2,
+  "builds": [
+    { "src": "api/maestro.js", "use": "@vercel/node" },
+    { "src": "**/*.html", "use": "@vercel/static" },
+    { "src": "**/*.css", "use": "@vercel/static" },
+    { "src": "**/*.js", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/maestro(.*)", "dest": "/api/maestro.js" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
