@@ -283,6 +283,27 @@ button {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* AUDIO — AZUL MARINO Y ROJO VINO */
+#playBtn {
+    background: #1a2b4c;
+    color: #f6f2ea;
+}
+
+#playBtn:hover {
+    background: #243a66;
+    transform: translateY(-2px);
+}
+
+#arpeggioBtn {
+    background: #722f37;
+    color: #f6f2ea;
+}
+
+#arpeggioBtn:hover {
+    background: #8b3943;
+    transform: translateY(-2px);
+}
+
 /* PISTA — AZUL MARINO */
 #hintBtn {
     background: #1a2b4c;
@@ -630,6 +651,25 @@ button {
     margin-bottom: 16px;
 }
 
+.audio-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.audio-control label {
+    font-size: 0.82rem;
+    color: #1a2b4c;
+    font-weight: 600;
+}
+
+.audio-control input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+    accent-color: #722f37;
+}
+
 .progress-bar {
     width: 100%;
     height: 10px;
@@ -712,18 +752,19 @@ button {
 
     body {
         padding: 0;
-        overflow: hidden; /* prevent bouncing scroll */
+        overflow-y: auto; /* allow scrolling on mobile */
+        -webkit-overflow-scrolling: touch;
     }
 
     .main-panel {
         min-height: 0;
         padding: 6px 8px;
         gap: 5px;
-        overflow: hidden;
-        height: 100dvh; /* fill the entire phone viewport */
+        overflow-y: auto; /* allow scrolling */
+        height: auto; /* let content determine height */
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
     }
 
     /* ─── Header: title + mode toggle ─── */
@@ -857,7 +898,7 @@ button {
         flex-direction: column;
         gap: 5px;
         flex: 1;
-        overflow: hidden;
+        overflow: visible;
     }
 }
 

@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Identificación de acordes</title>
 
@@ -21,19 +21,20 @@
 <header class="exercise-header">
 
 <div class="exercise-title">
-<h1>Identificación de acordes</h1>
+    <a href="../../../index.html" style="text-decoration:none; color:#722f37; font-size:0.8rem; display:block; margin-bottom:5px;">← Volver al menú</a>
+    <h1>Identificación de acordes</h1>
 </div>
 
 <div class="mode-controls">
 
-<span id="modeLabel">Modo entrenador</span>
+<span id="modeLabel">Modo manual</span>
 
 <button id="modeToggle">
 Cambiar modo
 </button>
 
 <div id="modeHint">
-Entrenamiento adaptativo
+Configura tu propio acorde
 </div>
 
 </div>
@@ -67,6 +68,14 @@ Grand staff
 <div id="stave" class="stave-host"></div>
 
 <div class="staff-actions">
+
+<button id="playBtn">
+    Escuchar
+</button>
+
+<button id="arpeggioBtn">
+    Arpegiar
+</button>
 
 <button id="skipBtn">
 Omitir
@@ -121,14 +130,21 @@ Sin pista.
 <span>Diagnóstico</span>
 
 <span id="sessionModeBadge">
-Entrenador
+Manual
 </span>
 
 </div>
 
 <section class="sidebar-section">
+    <h3>Ajustes de Audio</h3>
+    <div class="audio-control">
+        <label for="pianoVol">Volumen Piano</label>
+        <input type="range" id="pianoVol" min="0" max="100" value="80">
+    </div>
+</section>
 
-<h3>Progreso</h3>
+<section class="sidebar-section">
+    <h3>Progreso</h3>
 
 <div class="progress-bar">
 
@@ -188,8 +204,9 @@ Entrenador
 
 </div>
 
+<!-- TONE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <!-- VEXFLOW -->
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vexflow/4.2.3/vexflow-min.js"></script>
 
 <!-- TEORIA -->
@@ -210,10 +227,10 @@ Entrenador
 <!-- PERFIL -->
 
 <script src="../../../entrenamiento/perfil.js"></script>
-<script src="../../../entrenamiento/perfil-pedagogico.js"></script>
 
 <!-- IA -->
 
+<script src="../../../entrenamiento/audio-engine.js"></script>
 <script src="../../../entrenamiento/ai-engine.js"></script>
 <script src="../../../entrenamiento/llm-maestro.js"></script>
 

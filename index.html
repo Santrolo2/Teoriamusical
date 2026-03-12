@@ -2,20 +2,72 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Maestro de Acordes IA</title>
-    <meta http-equiv="refresh" content="0; url=./modulos/entrenamiento/identificacion-acordes/identificacion-acordes.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maestro de Teoría Musical IA</title>
     <style>
-        body { font-family: system-ui, sans-serif; background:#0f172a; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; text-align:center; }
-        a { color:#3b82f6; }
+        body {
+            font-family: "Georgia", serif;
+            background: #f5f2eb;
+            color: #1a2b4c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .menu-container {
+            background: white;
+            padding: 40px;
+            border: 1px solid #d4b68a;
+            box-shadow: 10px 10px 0 rgba(114, 47, 55, 0.15);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 { color: #722f37; margin-bottom: 30px; font-weight: normal; }
+        .options { display: grid; gap: 20px; }
+        .option-card {
+            padding: 20px;
+            border: 2px solid #1a2b4c;
+            text-decoration: none;
+            color: #1a2b4c;
+            transition: all 0.2s;
+            display: block;
+        }
+        .option-card:hover {
+            background: #722f37;
+            color: white;
+            border-color: #722f37;
+            transform: translateY(-3px);
+        }
+        .option-card h2 { margin: 0 0 10px 0; font-size: 1.4rem; }
+        .option-card p { margin: 0; font-size: 0.9rem; opacity: 0.8; }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .menu-container { padding: 20px; }
+            h1 { font-size: 1.4rem; margin-bottom: 20px; }
+            .option-card { padding: 14px; }
+            .option-card h2 { font-size: 1.15rem; }
+        }
     </style>
 </head>
 <body>
-    <div>
-        <h2>Cargando Maestro Musical...</h2>
-        <p>Si no eres redirigido, <a href="./modulos/entrenamiento/identificacion-acordes/identificacion-acordes.html">haz clic aquí</a>.</p>
+    <div class="menu-container">
+        <h1>Maestro Musical IA</h1>
+        <div class="options">
+            <a href="./modulos/entrenamiento/identificacion-acordes/identificacion-acordes.html" class="option-card">
+                <h2>Identificación de Acordes</h2>
+                <p>Ideal para pianistas y estudiantes de armonía básica.</p>
+            </a>
+            <a href="./modulos/entrenamiento/lectura-vertical/lectura-vertical.html" class="option-card">
+                <h2>Lectura Vertical (Directores)</h2>
+                <p>Identificación de acordes en texturas corales u orquestales.</p>
+            </a>
+        </div>
     </div>
-    <script>
-        window.location.replace("./modulos/entrenamiento/identificacion-acordes/identificacion-acordes.html");
-    </script>
 </body>
 </html>
