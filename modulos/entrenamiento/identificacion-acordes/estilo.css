@@ -752,24 +752,23 @@ button {
 
     body {
         padding: 0;
-        overflow: hidden; /* Prevent scrolling, force fit */
-        height: 100dvh;
+        overflow-y: auto; /* IMPORTANTE: Devolver la capacidad de hacer scroll libre */
+        -webkit-overflow-scrolling: touch;
     }
 
     .main-panel {
-        padding: 2px 2px;
-        gap: 2px;
-        overflow: hidden;
-        height: 100dvh;
-        max-height: 100dvh;
+        padding: 8px 4px;
+        gap: 8px;
+        overflow-y: auto;
+        min-height: 100dvh;
+        height: auto;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
     }
 
     .app-layout {
-        height: 100dvh;
-        overflow: hidden;
+        min-height: 100dvh;
+        overflow-y: auto;
     }
 
     .sidebar {
@@ -831,22 +830,20 @@ button {
     }
 
     .stave-host {
-        padding: 0;
-        margin: 0;
+        padding: 10px 0;
+        margin: 5px 0;
         display: flex;
         justify-content: center;
-        overflow: visible;
-        height: 140px; /* enough space for scaled SVG */
+        overflow-x: auto; /* Permite desplazar de lado a lado si el pentagrama es muy ancho */
+        overflow-y: hidden;
+        min-height: 220px;
     }
 
     .stave-host svg {
-        min-width: unset;
-        max-width: unset;
-        max-height: unset;
-        width: 100%;
+        min-width: 140%; /* Forza el ancho del SVG a ser un 40% más grande que la pantalla */
+        max-width: 200%;
         height: auto;
-        transform: scale(1.6);
-        transform-origin: center center;
+        /* Quitamos el transform scale porque genera bugs de colisión visual */
     }
 
     /* ─── Skip / Omitir actions ─── */
@@ -869,9 +866,9 @@ button {
     }
 
     .root-btn {
-        min-height: 32px;
-        font-size: 0.75rem;
-        padding: 2px;
+        min-height: 40px;
+        font-size: 0.85rem;
+        padding: 4px;
     }
 
     /* ─── Type buttons: 3×3 grid ─── */
@@ -884,10 +881,10 @@ button {
 
     .type-btn {
         flex: unset;
-        min-height: 36px;
-        font-size: 0.75rem;
-        padding: 2px;
-        line-height: 1.1;
+        min-height: 44px;
+        font-size: 0.82rem;
+        padding: 4px;
+        line-height: 1.2;
     }
 
     /* ─── Evaluate button ─── */
