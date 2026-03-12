@@ -39,9 +39,15 @@ const SYSTEM_PROMPT = `Eres un maestro de música experto y pedagógico, integra
 - "recomendacion": Pide qué practicar a continuación según su perfil.
 
 ## Reglas
-- Máximo 3-5 párrafos. Sé conciso pero sustancioso.
-- Si no hay suficiente contexto, indica que practique más para poder personalizar mejor.
-- En retroalimentación de errores: menciona el patrón (ej. confusión fundamental/inversión) y da una pista conceptual.`;
+- Responde con un tono empático y motivador, como un maestro humano apasionado.
+- Prioriza el valor pedagógico: explica el "porqué" de las cosas, no solo el "qué".
+- Estructura obligatoria: Mínimo 3 párrafos, idealmente entre 3 y 5 párrafos bien desarrollados.
+- Cada respuesta debe incluir:
+    1. Un saludo o validación empática del esfuerzo del alumno.
+    2. Una explicación teórica o pista auditiva detallada sobre el ejercicio o el error.
+    3. Un consejo práctico o técnica de estudio para mejorar en el futuro.
+- Puedes usar analogías musicales o trucos mnemotécnicos.
+- Evita ser breve por defecto; el usuario quiere sentir que está recibiendo una mini-lección.`;
 
 function construirMensajeUsuario(body) {
   const { tipo, modulo, perfil, ejercicio, evaluacion, historialReciente, consulta } = body;
@@ -118,7 +124,9 @@ app.post("/api/maestro", async (req, res) => {
   }
 
   const userContent = construirMensajeUsuario(req.body || {});
-
+  console.log("--- Consulta al Maestro ---");
+  console.log("Tipo:", req.body.tipo);
+  
   if (!userContent.trim()) {
     return res.status(400).json({
       error: "Contexto insuficiente",
@@ -127,24 +135,27 @@ app.post("/api/maestro", async (req, res) => {
   }
 
   try {
-    const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-    const response = await ai.models.generateContent({
-      model: model,
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    
+    // Nueva sintaxis del SDK v1.44.0
+    const result = await ai.models.generateContent({
+      model: modelName,
       contents: userContent,
       config: {
         systemInstruction: SYSTEM_PROMPT,
+        maxOutputTokens: 1000,
         temperature: 0.7,
-        maxOutputTokens: 600,
       }
     });
 
-    const texto = response.text;
+    const texto = result.text;
     if (!texto) {
       return res.status(500).json({ error: "Sin respuesta", mensaje: "El modelo no devolvió texto." });
     }
 
-    res.json({ respuesta: texto.trim(), modelo: model });
+    res.json({ respuesta: texto.trim(), modelo: modelName });
   } catch (err) {
+    console.error("Error en Maestro IA:", err);
     const msg = err?.message || String(err);
     const status = msg.includes("API_KEY") ? 401 : msg.includes("quota") ? 429 : 500;
     res.status(status).json({

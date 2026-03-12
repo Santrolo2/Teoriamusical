@@ -23,7 +23,7 @@ echo.
 cd /d "%~dp0"
 
 :: Abre la página en el navegador predeterminado
-start "" "pagina-principal.html"
+start "" "index.html"
 
 :: Mantener abierta unos segundos para que se lean los mensajes
 timeout /t 5 > nul

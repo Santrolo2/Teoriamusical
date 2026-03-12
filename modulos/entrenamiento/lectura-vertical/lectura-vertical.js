@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
 
     const state = {
-        modo: "trainer", // "manual" | "trainer"
+        modo: "manual", // "manual" | "trainer"
         formacion: "coral",
         manual: {
             raiz: "C",

@@ -752,19 +752,22 @@ button {
 
     body {
         padding: 0;
-        overflow-y: auto; /* allow scrolling on mobile */
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden; /* Prevent scrolling, force fit */
+        height: 100dvh;
     }
 
     .main-panel {
-        min-height: 0;
-        padding: 6px 8px;
-        gap: 5px;
-        overflow-y: auto; /* allow scrolling */
-        height: auto; /* let content determine height */
-        min-height: 100dvh;
+        padding: 4px 4px;
+        gap: 2px;
+        overflow: hidden;
+        height: 100dvh;
+        max-height: 100dvh;
         display: flex;
         flex-direction: column;
+    }
+
+    .sidebar {
+        display: none; /* Hide supplementary stats to guarantee single-screen fit */
     }
 
     /* ─── Header: title + mode toggle ─── */
@@ -813,15 +816,17 @@ button {
     }
 
     .stave-host {
-        padding: 0;
+        padding: 4px 0;
         margin: 0;
-        overflow: hidden;
-        max-height: 110px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        max-height: 250px;
     }
 
     .stave-host svg {
-        max-width: 100%;
-        max-height: 110px;
+        min-width: 100%;
+        max-width: 150%;
+        max-height: 250px;
         height: auto;
     }
 
@@ -845,9 +850,9 @@ button {
     }
 
     .root-btn {
-        min-height: 38px;
-        font-size: 0.82rem;
-        padding: 4px 2px;
+        min-height: 32px;
+        font-size: 0.75rem;
+        padding: 2px;
     }
 
     /* ─── Type buttons: 3×3 grid ─── */
@@ -860,10 +865,10 @@ button {
 
     .type-btn {
         flex: unset;
-        min-height: 42px;
-        font-size: 0.78rem;
-        padding: 4px 2px;
-        line-height: 1.2;
+        min-height: 36px;
+        font-size: 0.75rem;
+        padding: 2px;
+        line-height: 1.1;
     }
 
     /* ─── Evaluate button ─── */
