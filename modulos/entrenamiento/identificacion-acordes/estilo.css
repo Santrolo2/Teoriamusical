@@ -830,20 +830,23 @@ button {
     }
 
     .stave-host {
-        padding: 10px 0;
-        margin: 5px 0;
+        padding: 0;
+        margin: 0;
         display: flex;
         justify-content: center;
-        overflow-x: auto; /* Permite desplazar de lado a lado si el pentagrama es muy ancho */
-        overflow-y: hidden;
-        min-height: 220px;
+        align-items: center;
+        overflow: hidden; /* Cortamos los márgenes blancos */
+        height: 180px; /* Alto fijo de caja para no estirar la pantalla */
+        position: relative;
     }
 
     .stave-host svg {
-        min-width: 140%; /* Forza el ancho del SVG a ser un 40% más grande que la pantalla */
-        max-width: 200%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.6); /* Centrado y Ampliado */
+        width: 100%;
         height: auto;
-        /* Quitamos el transform scale porque genera bugs de colisión visual */
     }
 
     /* ─── Skip / Omitir actions ─── */
@@ -881,10 +884,10 @@ button {
 
     .type-btn {
         flex: unset;
-        min-height: 44px;
-        font-size: 0.82rem;
-        padding: 4px;
-        line-height: 1.2;
+        min-height: 38px;
+        font-size: 0.75rem;
+        padding: 2px;
+        line-height: 1.1;
     }
 
     /* ─── Evaluate button ─── */
