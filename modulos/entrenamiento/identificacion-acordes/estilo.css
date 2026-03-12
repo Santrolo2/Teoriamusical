@@ -757,26 +757,41 @@ button {
     }
 
     .main-panel {
-        padding: 4px 4px;
+        padding: 2px 2px;
         gap: 2px;
         overflow: hidden;
         height: 100dvh;
         max-height: 100dvh;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .app-layout {
+        height: 100dvh;
+        overflow: hidden;
     }
 
     .sidebar {
         display: none; /* Hide supplementary stats to guarantee single-screen fit */
     }
 
-    /* ─── Header: title + mode toggle ─── */
     .exercise-header {
-        border-bottom: 2px solid #722f37;
-        padding-bottom: 4px;
-        margin-bottom: 0;
+        border-bottom: 1px solid #722f37;
+        padding-bottom: 2px;
+        margin-bottom: 2px;
         flex-wrap: nowrap;
-        gap: 4px;
+        gap: 2px;
+    }
+
+    .exercise-title h1 {
+        font-size: 0.9rem;
+        margin: 2px 0;
+    }
+    
+    .exercise-title a {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
     }
 
     .exercise-title h1 {
@@ -816,18 +831,22 @@ button {
     }
 
     .stave-host {
-        padding: 4px 0;
+        padding: 0;
         margin: 0;
-        overflow-x: auto;
-        overflow-y: hidden;
-        max-height: 250px;
+        display: flex;
+        justify-content: center;
+        overflow: visible;
+        height: 140px; /* enough space for scaled SVG */
     }
 
     .stave-host svg {
-        min-width: 100%;
-        max-width: 150%;
-        max-height: 250px;
+        min-width: unset;
+        max-width: unset;
+        max-height: unset;
+        width: 100%;
         height: auto;
+        transform: scale(1.6);
+        transform-origin: center center;
     }
 
     /* ─── Skip / Omitir actions ─── */
@@ -838,9 +857,9 @@ button {
 
     #skipBtn, #nextBtn {
         flex: 1;
-        min-height: 36px;
-        font-size: 0.82rem;
-        padding: 4px;
+        min-height: 30px;
+        font-size: 0.75rem;
+        padding: 2px;
     }
 
     /* ─── Root buttons: 6-column grid ─── */
