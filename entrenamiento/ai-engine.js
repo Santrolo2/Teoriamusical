@@ -386,7 +386,8 @@ const AIEngine = (() => {
         registrarModulo,
         registrarEstrategiaCompartida,
         obtenerEstadoIA,
-        consultarMaestro
+        consultarMaestro,
+        consultar: (o) => consultarMaestro(o)
     };
 })();
 

@@ -2,6 +2,9 @@ const EvaluadorRespuesta = (() => {
     "use strict";
 
     function normalizarTipo(tipo) {
+        if (!tipo || typeof tipo !== "string") return tipo || null;
+        
+        const t = tipo.trim().toLowerCase();
         const mapa = {
             major: "major",
             minor: "minor",
@@ -12,9 +15,9 @@ const EvaluadorRespuesta = (() => {
             maj7: "maj7",
             dom7: "dom7",
             min7: "min7",
-            halfDim7: "halfDim7",
+            halfdim7: "halfDim7",
             dim7: "dim7",
-            minMaj7: "minMaj7",
+            minmaj7: "minMaj7",
 
             mayor: "major",
             menor: "minor",
@@ -23,11 +26,11 @@ const EvaluadorRespuesta = (() => {
             dominant7: "dom7",
             major7: "maj7",
             minor7: "min7",
-            halfDiminished7: "halfDim7",
+            halfdiminished7: "halfDim7",
             diminished7: "dim7"
         };
 
-        return mapa[tipo] || tipo || null;
+        return mapa[t] || t;
     }
 
     function limpiarNota(nota) {
@@ -109,6 +112,11 @@ const EvaluadorRespuesta = (() => {
             coincidencias.fundamental &&
             coincidencias.tipo &&
             coincidencias.inversion;
+
+        console.log(`Evaluador: [${esperado.nombre}] vs [${respuesta.fundamental} ${respuesta.tipoId}] -> Correcto: ${correcto}`);
+        if (!coincidencias.tipo) {
+            console.warn(`Discrepancia de TIPO: Esperado=${esperado.tipoId}, Recibido=${respuesta.tipoId}`);
+        }
 
         return {
             correcto,

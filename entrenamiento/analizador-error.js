@@ -134,23 +134,23 @@ const AnalizadorError = (() => {
         const mapa = {
             fundamental: {
                 breve: "Falló la fundamental.",
-                tecnica: "La raíz identificada no coincide con la estructura real del acorde.",
-                sugerenciaEjercicio: "Practicar reconocimiento de raíz."
+                tecnica: "La nota raíz que elegiste no es la base del acorde. Intenta identificar la nota más grave en estado fundamental.",
+                sugerenciaEjercicio: "Practica cantando la nota tónica del acorde para internalizar su centro de gravedad."
             },
             calidad: {
-                breve: "Falló la cualidad.",
-                tecnica: "La raíz es correcta, pero el tipo de acorde no coincide.",
-                sugerenciaEjercicio: "Practicar comparación entre tipos cercanos."
+                breve: "Falló la cualidad (tipo).",
+                tecnica: "Acertaste la raíz, pero el 'color' del acorde (Mayor, Menor, etc.) es distinto. Presta atención a la tercera.",
+                sugerenciaEjercicio: "Compara el brillo de un acorde Mayor con la sonoridad más oscura o melancólica de uno Menor."
             },
             inversion: {
                 breve: "Falló la inversión.",
-                tecnica: "El acorde fue reconocido, pero no el bajo correcto.",
-                sugerenciaEjercicio: "Practicar inversiones y lectura del bajo."
+                tecnica: "El acorde es correcto, pero la nota que está en el bajo no es la fundamental.",
+                sugerenciaEjercicio: "Escucha el arpegio y fíjate en qué nota del acorde (3ª, 5ª o 7ª) inicia la estructura desde abajo."
             },
             error_general: {
                 breve: "Respuesta incorrecta.",
-                tecnica: "La respuesta no coincide con varios rasgos estructurales del acorde.",
-                sugerenciaEjercicio: "Reducir dificultad y reforzar lectura básica."
+                tecnica: "La estructura identificada difiere significativamente de la mostrada.",
+                sugerenciaEjercicio: "Usa el botón 'Escuchar' y 'Arpegiar' para desglosar el acorde nota por nota antes de decidir."
             }
         };
 

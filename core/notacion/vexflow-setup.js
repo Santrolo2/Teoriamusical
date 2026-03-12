@@ -38,9 +38,11 @@ window.VexFlowManager = (() => {
         target.innerHTML = "";
 
         renderer = new VF.Renderer(target, VF.Renderer.Backends.SVG);
-        renderer.resize(computeWidth(target), 280);
+        const width = computeWidth(target);
+        renderer.resize(width, 280);
 
         context = renderer.getContext();
+        context.setViewBox(0, 0, width, 280); // Asegurar que todo sea visible
         if (context && typeof context.setFont === "function") {
             context.setFont("Arial", 10, "");
         }
@@ -101,7 +103,7 @@ window.VexFlowManager = (() => {
     function crearNotaConAccidentales(VF, clef, keysData) {
     const keys = keysData.length
         ? keysData.map(k => k.key)
-        : [clef === "bass" ? "d/3" : "b/4"];
+        : [clef === "bass" ? "d/3" : (clef === "alto" ? "c/4" : "b/4")];
 
     const staveNote = new VF.StaveNote({
         clef,
@@ -128,9 +130,9 @@ window.VexFlowManager = (() => {
         const bass = parsed.filter(n => n.midi < BASS_SPLIT_MIDI);
         const treble = parsed.filter(n => n.midi >= BASS_SPLIT_MIDI);
 
-        if (!bass.length && treble.length) bass.push(treble[0]);
-        if (!treble.length && bass.length) treble.push(bass[bass.length - 1]);
-
+        // Si el acorde es puramente agudo o puramente grave, 
+        // dejamos el otro pentagrama vacío (VexFlow dibujará silencios o simplemente quedará limpio)
+        // en lugar de forzar una nota a un lugar que no le pertenece.
         return { bass, treble };
     }
 
@@ -185,23 +187,122 @@ window.VexFlowManager = (() => {
 
         const grupos = dividirNotasPorRegistro(acorde.notas);
 
-        const trebleNote = crearNotaConAccidentales(VF, "treble", grupos.treble);
-        const bassNote = crearNotaConAccidentales(VF, "bass", grupos.bass);
+        // Ottava markers omitted due to version incompatibility, using simple transposition for rendering logic
+        let visualTreble = grupos.treble;
+        if (grupos.treble.length) {
+            const maxTreble = Math.max(...grupos.treble.map(n => n.midi));
+            if (maxTreble >= 84) {
+                visualTreble = grupos.treble.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave - 1}`}));
+            }
+        }
 
-        const trebleVoice = new VF.Voice({ num_beats: 4, beat_value: 4 });
-        const bassVoice = new VF.Voice({ num_beats: 4, beat_value: 4 });
+        let visualBass = grupos.bass;
+        if (grupos.bass.length) {
+            const minBass = Math.min(...grupos.bass.map(n => n.midi));
+            if (minBass <= 36) {
+                visualBass = grupos.bass.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave + 1}`}));
+            }
+        }
 
-        if (typeof trebleVoice.setStrict === "function") trebleVoice.setStrict(false);
-        if (typeof bassVoice.setStrict === "function") bassVoice.setStrict(false);
+        if (grupos.treble.length) {
+            const trebleNote = crearNotaConAccidentales(VF, "treble", visualTreble);
+            const trebleVoice = new VF.Voice({ num_beats: 4, beat_value: 4 });
+            if (typeof trebleVoice.setStrict === "function") trebleVoice.setStrict(false);
+            trebleVoice.addTickables([trebleNote]);
+            new VF.Formatter().joinVoices([trebleVoice]).format([trebleVoice], staveWidth - 50);
+            trebleVoice.draw(context, trebleStave);
+        }
 
-        trebleVoice.addTickables([trebleNote]);
-        bassVoice.addTickables([bassNote]);
+        if (grupos.bass.length) {
+            const bassNote = crearNotaConAccidentales(VF, "bass", visualBass);
+            const bassVoice = new VF.Voice({ num_beats: 4, beat_value: 4 });
+            if (typeof bassVoice.setStrict === "function") bassVoice.setStrict(false);
+            bassVoice.addTickables([bassNote]);
+            new VF.Formatter().joinVoices([bassVoice]).format([bassVoice], staveWidth - 50);
+            bassVoice.draw(context, bassStave);
+        }
 
-        new VF.Formatter().joinVoices([trebleVoice]).format([trebleVoice], staveWidth - 50);
-        new VF.Formatter().joinVoices([bassVoice]).format([bassVoice], staveWidth - 50);
+        // Los marcadores Ottava se omiten temporalmente para evitar el error de constructor
+    }
 
-        trebleVoice.draw(context, trebleStave);
-        bassVoice.draw(context, bassStave);
+    function dibujarScore(stavesData, tonalidadId = null, containerId = "stave") {
+        const VF = getVF();
+        init(containerId);
+
+        const target = ensureContainer(containerId);
+        const width = computeWidth(target);
+        const staveWidth = width - 80;
+        const x = 30;
+        
+        // El alto total dependerá del número de sistemas
+        const systemHeight = 110;
+        renderer.resize(width, stavesData.length * systemHeight + 100);
+
+        const ks = obtenerKeySignature(tonalidadId);
+        const staves = [];
+
+        stavesData.forEach((data, i) => {
+            const y = 30 + (i * systemHeight);
+            const stave = new VF.Stave(x, y, staveWidth);
+            stave.addClef(data.clef || "treble");
+            try {
+                stave.addKeySignature(ks);
+            } catch (_) {
+                stave.addKeySignature("C");
+            }
+            stave.setContext(context).draw();
+            staves.push(stave);
+
+            // Notas
+            if (data.notas && data.notas.length) {
+                const parsed = data.notas.map(parseSimpleNote);
+                
+                const maxMidi = Math.max(...parsed.map(n => n.midi));
+                const minMidi = Math.min(...parsed.map(n => n.midi));
+                
+                let visualNotes = parsed;
+                const visualOffset = data.displayOctaveOffset || 0;
+
+                if (maxMidi > 84) { // Superior a C6
+                    visualNotes = parsed.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave - 1 + visualOffset}`}));
+                } else if (minMidi < 36) { // Inferior a C2
+                    visualNotes = parsed.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave + 1 + visualOffset}`}));
+                } else if (visualOffset !== 0) {
+                    visualNotes = parsed.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave + visualOffset}`}));
+                }
+
+                const note = crearNotaConAccidentales(VF, data.clef || "treble", visualNotes);
+                const voice = new VF.Voice({ num_beats: 4, beat_value: 4 });
+                if (typeof voice.setStrict === "function") voice.setStrict(false);
+                voice.addTickables([note]);
+                new VF.Formatter().joinVoices([voice]).format([voice], staveWidth - 50);
+                voice.draw(context, stave);
+
+                // Ottava visual omitida para estabilidad
+            }
+        });
+
+        // Conectores si hay más de uno
+        if (staves.length > 1) {
+            const firstStave = staves[0];
+            const lastStave = staves[staves.length - 1];
+
+            new VF.StaveConnector(firstStave, lastStave)
+                .setType(VF.StaveConnector.type.SINGLE_LEFT)
+                .setContext(context)
+                .draw();
+            
+            new VF.StaveConnector(firstStave, lastStave)
+                .setType(VF.StaveConnector.type.SINGLE_RIGHT)
+                .setContext(context)
+                .draw();
+            
+            // Usamos LLAVE (BRACE) para unir todos los sistemas como pidió el usuario
+            new VF.StaveConnector(firstStave, lastStave)
+                .setType(VF.StaveConnector.type.BRACE)
+                .setContext(context)
+                .draw();
+        }
     }
 
     function dibujarPentagrama(acorde, tonalidadId = null, containerId = "stave") {
@@ -212,6 +313,7 @@ window.VexFlowManager = (() => {
         init,
         limpiar,
         dibujarPentagrama,
-        dibujarGrandStaff
+        dibujarGrandStaff,
+        dibujarScore
     };
 })();

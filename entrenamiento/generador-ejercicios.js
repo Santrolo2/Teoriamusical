@@ -31,9 +31,12 @@ const GeneradorEjercicios = (() => {
         inversion = 0,
         tonalidad = "C",
         origen = "normal",
-        meta = {}
+        meta = {},
+        config = {}
     }) {
-        const acorde = TEORIA.acordes.construir(raiz, tipo, inversion);
+        const octavaBase = config.octava || (Math.floor(Math.random() * 4) + 2); // Rango 2 a 5
+
+        const acorde = TEORIA.acordes.construir(raiz, tipo, inversion, octavaBase);
 
         acorde.tonalidadId = tonalidad;
         acorde.gradoRomano = null;
@@ -44,6 +47,12 @@ const GeneradorEjercicios = (() => {
             origen,
             tonalidad,
             acorde,
+            meta: {
+                octava: octavaBase,
+                dificultad: meta.dificultad || 1,
+                focoCategoria: meta.focoCategoria || null,
+                focoValor: meta.focoValor || null
+            },
             respuestaCorrecta: {
                 fundamental: acorde.raiz,
                 tipoId: acorde.tipo,
@@ -53,11 +62,6 @@ const GeneradorEjercicios = (() => {
                 gradoRomano: acorde.gradoRomano || null,
                 tonalidadId: tonalidad || null,
                 bajo: acorde.bajo
-            },
-            meta: {
-                dificultad: meta.dificultad || 1,
-                focoCategoria: meta.focoCategoria || null,
-                focoValor: meta.focoValor || null
             }
         };
     }
@@ -112,7 +116,8 @@ const GeneradorEjercicios = (() => {
                 dificultad: config.dificultad || 1,
                 focoCategoria: foco,
                 focoValor: foco
-            }
+            },
+            config: config
         });
     }
 

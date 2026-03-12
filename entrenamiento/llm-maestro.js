@@ -89,6 +89,8 @@
     if (typeof window !== "undefined") {
         window.LLMMaestro = {
             consultarMaestro,
+            // Alias para compatibilidad, siempre retorna el objeto de respuesta
+            consultar: consultarMaestro,
             comprobarDisponibilidad,
             setBaseUrl,
             getBaseUrl

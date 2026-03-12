@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const state = {
-        modo: "trainer",
+        modo: "manual",
         ejercicioActual: null,
         inicioTiempo: 0,
         revealActivo: false,
@@ -50,7 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
             raizPasoSuperado: false,
             raizManual: null,
             tipoManual: null
-        }
+        },
+        rachaErrores: 0
     };
 
     const els = {
@@ -70,6 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         skipBtn: document.getElementById("skipBtn"),
         nextBtn: document.getElementById("nextBtn"),
+        playBtn: document.getElementById("playBtn"),
+        arpeggioBtn: document.getElementById("arpeggioBtn"),
 
         progressFill: document.getElementById("progressFill"),
         statsSummary: document.getElementById("statsSummary"),
@@ -82,7 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
         maestroContent: document.getElementById("maestroContent"),
         maestroLoading: document.getElementById("maestroLoading"),
         maestroError: document.getElementById("maestroError"),
-        maestroClose: document.getElementById("maestroClose")
+        maestroClose: document.getElementById("maestroClose"),
+        pianoVol: document.getElementById("pianoVol")
     };
 
     function ok(cond, msg) {
@@ -113,9 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function tiposDisponibles() {
         try {
             if (window.TIPOS_ACORDE && typeof window.TIPOS_ACORDE.listar === "function") {
-                const todos = window.TIPOS_ACORDE.listar().map(t => t.id);
-                // Filtrar solo los 9 tipos principales que se muestran en la UI solicitada
-                return todos.filter(t => Object.keys(FALLBACK_TYPES).includes(t));
+                return window.TIPOS_ACORDE.listar().map(t => t.id);
             }
         } catch (_) {}
         return Object.keys(FALLBACK_TYPES);
@@ -194,14 +196,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return arr;
     }
 
-    function construirAcordeLocal(raiz = "C", tipo = "major", inversion = 0, tonalidad = "C") {
-        if (window.TEORIA && typeof window.TEORIA.acordes.construir === "function") {
+    function construirAcordeLocal(raiz = "C", tipo = "major", inversion = 0, tonalidad = "C", octava = 4) {
+        if (window.TEORIA && window.TEORIA.acordes && typeof window.TEORIA.acordes.construir === "function") {
             try {
-                const acorde = window.TEORIA.acordes.construir(raiz, tipo, inversion);
+                console.log(`[TEORIA] Construyendo acorde: ${raiz} ${tipo} inv:${inversion} oct:${octava}`);
+                const acorde = window.TEORIA.acordes.construir(raiz, tipo, inversion, octava);
                 return {
                     id: `local_${Date.now()}`,
                     modo: "identificacion",
-                    origen: "fallback_local",
+                    origen: "teoria_engine",
                     tonalidad,
                     acorde: {
                         raiz: acorde.raiz,
@@ -218,13 +221,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     meta: {
                         modulo: MODULO,
-                        focoCategoria: "fallback_local",
+                        focoCategoria: "teoria_engine",
                         focoValor: tipo
                     }
                 };
             } catch (e) {
-                console.warn("Fallo al construir localmente usando TEORIA:", e);
+                console.warn("Fallo al construir usando TEORIA engine, usando fallback local:", e);
             }
+        } else {
+            console.warn("[FALLBACK] TEORIA engine no disponible. Usando generador simple local.");
         }
 
         const mapas = {
@@ -243,12 +248,13 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         let notas = mapas[raiz] || ["C4", "E4", "G4"];
+        const tLower = (tipo || "").toLowerCase();
 
-        if (tipo === "minor") {
+        if (tLower.includes("minor") || tLower.includes("min")) {
             notas = [notas[0], bajarSemitono(notas[1]), notas[2]];
-        } else if (tipo === "diminished") {
+        } else if (tLower.includes("dim")) {
             notas = [notas[0], bajarSemitono(notas[1]), bajarSemitono(notas[2])];
-        } else if (tipo === "augmented") {
+        } else if (tLower.includes("aug")) {
             notas = [notas[0], notas[1], subirSemitono(notas[2])];
         }
 
@@ -276,7 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
             meta: {
                 modulo: MODULO,
                 focoCategoria: "fallback_local",
-                focoValor: tipo
+                focoValor: tipo,
+                octava: octava
             }
         };
     }
@@ -287,15 +294,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const tipo = tipos[Math.floor(Math.random() * tipos.length)] || "major";
     const tonalidad = TONALIDADES[Math.floor(Math.random() * TONALIDADES.length)] || "C";
     const inversion = Math.floor(Math.random() * 3);
-
-    return construirAcordeLocal(raiz, tipo, inversion, tonalidad);
+    const octava = Math.floor(Math.random() * 4) + 2; // Octava 2 a 5 (C2 a B5)
+    return construirAcordeLocal(raiz, tipo, inversion, tonalidad, octava);
 }
 
     function construirEjercicioManual() {
         const tipos = tiposDisponibles();
         const tipo = tipos[Math.floor(Math.random() * tipos.length)] || "major";
         const inversion = Number.isInteger(state.manual.inversion) ? state.manual.inversion : 0;
-        return construirAcordeLocal(state.manual.raiz, tipo, inversion, state.manual.tonalidad);
+        const octava = Math.floor(Math.random() * 3) + 2; // Rango variado 2 a 4 para modo manual inicial
+        return construirAcordeLocal(state.manual.raiz, tipo, inversion, state.manual.tonalidad, octava);
     }
 
     function generarEjercicioSeguro() {
@@ -458,15 +466,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderPentagrama() {
         try {
-            ok(window.VexFlowManager && typeof window.VexFlowManager.dibujarGrandStaff === "function", "VexFlowManager no disponible.");
-            ok(state.ejercicioActual?.acorde?.notas?.length, "No hay notas para dibujar.");
+            if (!window.VexFlowManager) throw new Error("VexFlowManager no disponible.");
+            if (!state.ejercicioActual?.acorde?.notas?.length) return;
+            
             window.VexFlowManager.dibujarGrandStaff(
                 state.ejercicioActual.acorde,
                 state.ejercicioActual.tonalidad || "C",
                 "stave"
             );
         } catch (e) {
-            errorUI(`Error al dibujar pentagrama: ${e.message}`);
+            console.error(e);
+            errorUI(`Error al dibujar: ${e.message}`);
         }
     }
 
@@ -528,6 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function procesarExitoGlobal(intento) {
+        if (window.AudioEngine) AudioEngine.detenerTodo();
         state.stats.correctas++;
         bloquearOpciones(true);
         mostrarResultado(intento);
@@ -698,6 +709,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (intento.pista) els.hintBox.textContent = intento.pista;
 
         if (intento.resultado.correcto) {
+            state.rachaErrores = 0;
             mostrarFeedback(state.pistaUsada ? "Correcto con ayuda previa." : texto, "correct");
             actualizarSidebar();
             
@@ -706,12 +718,18 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        state.rachaErrores++;
+        if (state.rachaErrores >= 3) {
+            setTimeout(consultarMaestro, 1500);
+        }
+
         mostrarFeedback(texto, "incorrect");
         actualizarSidebar();
     }
 
     function omitirEjercicio() {
         if (!state.ejercicioActual) return;
+        if (window.AudioEngine) AudioEngine.detenerTodo();
 
         state.stats.total++;
         state.stats.omitidas++;
@@ -750,21 +768,27 @@ document.addEventListener("DOMContentLoaded", () => {
             ? "retroalimentacion_error"
             : "resumen_sesion";
 
-        const resultado = await (window.AIEngine?.consultarMaestro?.({
-            tipo,
-            modulo: MODULO,
-            ejercicio: state.ejercicioActual || null,
-            evaluacion: state.ultimaEvaluacion || null
-        }) ?? Promise.resolve({ ok: false, error: "Maestro no disponible." }));
+        try {
+            const resp = await (window.AIEngine?.consultar?.({
+                tipo,
+                modulo: MODULO,
+                ejercicio: state.ejercicioActual || null,
+                evaluacion: state.ultimaEvaluacion || null
+            }) ?? Promise.resolve({ ok: false, error: "Maestro no disponible." }));
 
-        els.maestroLoading.classList.add("hidden");
+            els.maestroLoading.classList.add("hidden");
 
-        if (resultado.ok && resultado.respuesta) {
-            els.maestroContent.classList.remove("hidden");
-            els.maestroContent.innerHTML = `<div class="maestro-texto">${resultado.respuesta.replace(/\n/g, "<br>")}</div>`;
-        } else {
+            if (resp.ok && resp.respuesta) {
+                els.maestroContent.classList.remove("hidden");
+                els.maestroContent.innerHTML = `<div class="maestro-texto">${resp.respuesta.replace(/\n/g, "<br>")}</div>`;
+            } else {
+                els.maestroError.classList.remove("hidden");
+                els.maestroError.textContent = resp.error || "No se pudo conectar al Maestro.";
+            }
+        } catch (e) {
+            els.maestroLoading.classList.add("hidden");
             els.maestroError.classList.remove("hidden");
-            els.maestroError.textContent = resultado.error || "No se pudo conectar al Maestro. ¿Está el backend corriendo?";
+            els.maestroError.textContent = "Error de conexión con el Maestro.";
         }
     }
 
@@ -824,9 +848,17 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPentagrama();
         renderOpciones();
         actualizarSidebar();
+
+        // Reproducción automática del acorde al generar
+        if (window.AudioEngine && state.ejercicioActual?.acorde?.notas) {
+            setTimeout(() => {
+                AudioEngine.tocarArmonico(state.ejercicioActual.acorde.notas);
+            }, 400);
+        }
     }
 
     function cambiarModo() {
+        if (window.AudioEngine) AudioEngine.detenerTodo();
         state.modo = state.modo === "trainer" ? "manual" : "trainer";
 
         els.modeLabel.textContent = state.modo === "trainer" ? "Modo entrenador" : "Modo manual";
@@ -882,8 +914,49 @@ document.addEventListener("DOMContentLoaded", () => {
             //els.hintBtn.addEventListener("click", pedirPista);
             els.skipBtn.addEventListener("click", omitirEjercicio);
             els.nextBtn.addEventListener("click", generarEjercicio);
+
+            if (els.playBtn) {
+                els.playBtn.addEventListener("click", () => {
+                    if (state.ejercicioActual && window.AudioEngine) {
+                        AudioEngine.tocarArmonico(state.ejercicioActual.acorde.notas);
+                    }
+                });
+            }
+
+            if (els.arpeggioBtn) {
+                els.arpeggioBtn.addEventListener("click", () => {
+                    if (state.ejercicioActual && window.AudioEngine) {
+                        AudioEngine.tocarMelodico(state.ejercicioActual.acorde.notas);
+                    }
+                });
+            }
+
             if (els.maestroBtn) els.maestroBtn.addEventListener("click", consultarMaestro);
             if (els.maestroClose) els.maestroClose.addEventListener("click", cerrarMaestroPanel);
+
+            // Control de volumen dinámico
+            const updateVolumeVisibility = () => {
+                if (els.pianoVol) els.pianoVol.parentElement.style.display = "flex";
+                if (els.choirVol) els.choirVol.parentElement.style.display = "none";
+                if (els.stringsVol) els.stringsVol.parentElement.style.display = "none";
+            };
+
+            if (els.pianoVol) {
+                els.pianoVol.addEventListener("input", (e) => {
+                    const val = parseFloat(e.target.value) / 100;
+                    if (window.AudioEngine) AudioEngine.setVolume("piano", val);
+                });
+            }
+
+            updateVolumeVisibility();
+
+            // Control de volumen
+            if (els.pianoVol) {
+                els.pianoVol.addEventListener("input", (e) => {
+                    const val = parseFloat(e.target.value) / 100;
+                    if (window.AudioEngine) AudioEngine.setVolume("piano", val);
+                });
+            }
         } catch (e) {
             errorUI(`Error de inicialización: ${e.message}`);
         }
