@@ -1,6 +1,6 @@
 /**
  * Cliente del Maestro de Música con IA (LLM real)
- * Llama al backend que usa OpenAI para retroalimentación pedagógica.
+ * Llama al backend que usa Gemini para retroalimentacion pedagogica.
  */
 (function () {
     "use strict";

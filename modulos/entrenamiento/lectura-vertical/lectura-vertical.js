@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ]
         }
     };
-    const RAICES = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+    const RAICES = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
     const TONALIDADES = ["C", "G", "D", "A", "E", "B", "F#", "C#", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
     const INVERSIONES = [
         { value: 0, label: "Fund." },
@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
             total: 0,
             correctas: 0
         },
+        ultimaEvaluacion: null,
         revealActivo: false,
         playingTimeout: null
     };
@@ -82,6 +83,13 @@ document.addEventListener("DOMContentLoaded", () => {
         statsSummary: document.getElementById("statsSummary"),
         progressFill: document.getElementById("progressFill"),
         maestroBtn: document.getElementById("maestroBtn"),
+        maestroPanel: document.getElementById("maestroPanel"),
+        maestroContent: document.getElementById("maestroContent"),
+        maestroLoading: document.getElementById("maestroLoading"),
+        maestroError: document.getElementById("maestroError"),
+        maestroClose: document.getElementById("maestroClose"),
+        maestroPregunta: document.getElementById("maestroPregunta"),
+        maestroAskBtn: document.getElementById("maestroAskBtn"),
         pianoVol: document.getElementById("pianoVol"),
         choirVol: document.getElementById("choirVol"),
         stringsVol: document.getElementById("stringsVol")
@@ -153,7 +161,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const rootGrid = document.getElementById("rootGrid");
         RAICES.forEach(raiz => {
-            const btn = crearBoton(raiz, raiz, state.manual.raiz === raiz, `key-btn ${raiz.includes("b") || raiz.includes("#") ? "accidental" : ""}`);
+            const textoVisible = notaVisibleSegunTonalidad(raiz, state.manual.tonalidad);
+            const btn = crearBoton(raiz, textoVisible, state.manual.raiz === raiz, `key-btn ${raiz.includes("b") || raiz.includes("#") ? "accidental" : ""}`);
             btn.addEventListener("click", () => {
                 if (window.AudioEngine) AudioEngine.detenerTodo();
                 state.manual.raiz = raiz;
@@ -204,6 +213,21 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.textContent = label;
         btn.dataset.value = value;
         return btn;
+    }
+
+    function notaVisibleSegunTonalidad(nota, tonalidad) {
+        try {
+            if (window.TONALIDADES && typeof window.TONALIDADES.notaVisibleEnTonalidad === "function") {
+                return window.TONALIDADES.notaVisibleEnTonalidad(nota, tonalidad || "C");
+            }
+        } catch (_) {}
+        return nota;
+    }
+
+    function nombreAcordeVisible(acorde, tonalidad) {
+        if (!acorde) return "";
+        const simbolo = window.TIPOS_ACORDE?.obtener?.(acorde.tipo)?.simbolo || "";
+        return `${notaVisibleSegunTonalidad(acorde.raiz, tonalidad)}${simbolo}`;
     }
 
     function generarEjercicio() {
@@ -294,7 +318,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderInfoOculta() {
         if (!state.ejercicioActual) return;
-        els.chordName.textContent = state.revealActivo ? state.ejercicioActual.acorde.nombre : "Acorde oculto";
+        els.chordName.textContent = state.revealActivo
+            ? nombreAcordeVisible(state.ejercicioActual.acorde, state.ejercicioActual.tonalidad)
+            : "Acorde oculto";
         els.chordType.textContent = state.revealActivo 
             ? "" 
             : "Analiza la partitura";
@@ -344,9 +370,87 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function obtenerEjercicioParaMaestro() {
+        if (!state.ejercicioActual) return null;
+        return {
+            ...state.ejercicioActual,
+            contextoModulo: {
+                modulo: "lectura_vertical",
+                formacion: FORMACIONES[state.formacion]?.nombre || state.formacion,
+                modo: state.modo
+            }
+        };
+    }
+
+    function prepararPanelMaestro() {
+        if (!els.maestroPanel) return false;
+        els.maestroPanel.classList.remove("hidden");
+        if (els.maestroContent) {
+            els.maestroContent.classList.add("hidden");
+            els.maestroContent.innerHTML = "";
+        }
+        if (els.maestroLoading) els.maestroLoading.classList.remove("hidden");
+        if (els.maestroError) els.maestroError.classList.add("hidden");
+        return true;
+    }
+
+    function mostrarRespuestaMaestro(texto) {
+        if (els.maestroLoading) els.maestroLoading.classList.add("hidden");
+        if (els.maestroError) els.maestroError.classList.add("hidden");
+        if (els.maestroContent) {
+            els.maestroContent.classList.remove("hidden");
+            els.maestroContent.innerHTML = `<div class="maestro-texto">${texto.replace(/\n/g, "<br>")}</div>`;
+        }
+    }
+
+    function mostrarErrorMaestro(mensaje) {
+        if (els.maestroPanel) els.maestroPanel.classList.remove("hidden");
+        if (els.maestroLoading) els.maestroLoading.classList.add("hidden");
+        if (els.maestroError) {
+            els.maestroError.classList.remove("hidden");
+            els.maestroError.textContent = mensaje;
+        }
+    }
+
+    async function consultarMaestro(tipo = null, consulta = null) {
+        if (!prepararPanelMaestro()) return;
+
+        try {
+            const res = await (window.AIEngine?.consultar?.({
+                tipo: tipo || (state.ultimaEvaluacion && !state.ultimaEvaluacion.correcto ? "retroalimentacion_error" : "resumen_sesion"),
+                modulo: "lectura_vertical",
+                ejercicio: obtenerEjercicioParaMaestro(),
+                evaluacion: state.ultimaEvaluacion,
+                consulta
+            }) ?? Promise.resolve({ ok: false, error: "Maestro no disponible." }));
+
+            if (res.ok && res.respuesta) {
+                mostrarRespuestaMaestro(res.respuesta);
+            } else {
+                mostrarErrorMaestro(res.error || "Error al consultar al Maestro.");
+            }
+        } catch (e) {
+            mostrarErrorMaestro("Error de conexión con el Maestro.");
+        }
+    }
+
+    function preguntarAlMaestro() {
+        const consulta = els.maestroPregunta?.value?.trim();
+        if (!consulta) {
+            mostrarErrorMaestro("Escribe una pregunta para consultar al Maestro.");
+            return;
+        }
+        consultarMaestro("consulta_libre", consulta);
+    }
+
     function evaluar(respuesta, btnRef) {
         state.stats.total++;
         const correcta = state.ejercicioActual.acorde.tipo === respuesta;
+        state.ultimaEvaluacion = {
+            correcto: correcta,
+            respuestaUsuario: { tipo: respuesta },
+            comparacion: { tipo: correcta }
+        };
         
         // Limpiar estados previos de botones
         document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("correct", "incorrect"));
@@ -429,35 +533,18 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        if (els.maestroBtn && window.LLMMaestro) {
-            els.maestroBtn.onclick = async () => {
-                const content = document.getElementById("maestroContent");
-                const panel = document.getElementById("maestroPanel");
-                const loading = document.getElementById("maestroLoading");
-                panel.classList.remove("hidden");
-                loading.classList.remove("hidden");
-                content.innerHTML = "";
-                try {
-                    const res = await LLMMaestro.consultar({
-                        modulo: "lectura_vertical",
-                        ejercicio: state.ejercicioActual,
-                        stats: state.stats
-                    });
-                    
-                    if (res.ok && res.respuesta) {
-                        content.innerHTML = `<div class="maestro-texto">${res.respuesta.replace(/\n/g, "<br>")}</div>`;
-                    } else {
-                        content.innerHTML = `<p class="error">${res.error || "Error al consultar al Maestro"}</p>`;
-                    }
-                } catch (e) {
-                    content.innerHTML = `<p>Error: ${e.message}</p>`;
-                } finally {
-                    loading.classList.add("hidden");
+        if (els.maestroBtn) els.maestroBtn.onclick = () => consultarMaestro();
+        if (els.maestroClose) els.maestroClose.onclick = () => {
+            if (els.maestroPanel) els.maestroPanel.classList.add("hidden");
+        };
+        if (els.maestroAskBtn) els.maestroAskBtn.onclick = preguntarAlMaestro;
+        if (els.maestroPregunta) {
+            els.maestroPregunta.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                    event.preventDefault();
+                    preguntarAlMaestro();
                 }
-            };
-            document.getElementById("maestroClose").onclick = () => {
-                document.getElementById("maestroPanel").classList.add("hidden");
-            };
+            });
         }
 
         renderControlesModo();

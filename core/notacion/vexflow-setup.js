@@ -64,7 +64,11 @@ window.VexFlowManager = (() => {
         }
 
         const clean = literal.trim();
-        const match = clean.match(/^([A-Ga-g])([b#]{0,2})(-?\d+)$/);
+        const match = clean
+            .replace(/♯/g, "#")
+            .replace(/♭/g, "b")
+            .replace(/♮/g, "n")
+            .match(/^([A-Ga-g])(bb|b|n|##|#)?(-?\d+)$/);
 
         if (!match) {
             throw new Error(`Formato de nota inválido: ${literal}`);
@@ -100,7 +104,33 @@ window.VexFlowManager = (() => {
         return clean || "C";
     }
 
-    function crearNotaConAccidentales(VF, clef, keysData) {
+    function mapaArmadura(tonalidadId) {
+        const ks = obtenerKeySignature(tonalidadId);
+        try {
+            if (window.TONALIDADES && typeof window.TONALIDADES.mapaArmadura === "function") {
+                return window.TONALIDADES.mapaArmadura(ks);
+            }
+        } catch (_) {}
+
+        return { C: "", D: "", E: "", F: "", G: "", A: "", B: "" };
+    }
+
+    function accidentalVisibleSegunArmadura(nota, tonalidadId) {
+        const esperado = mapaArmadura(tonalidadId)[nota.letter] || "";
+        const real = nota.accidental || "";
+
+        if (real === esperado) return "";
+        if (!real && esperado) return "n";
+        return real;
+    }
+
+    function construirKeyVisual(nota, octave, tonalidadId) {
+        const accidentalVisible = accidentalVisibleSegunArmadura(nota, tonalidadId);
+        const accidentalKey = accidentalVisible === "n" ? "n" : (nota.accidental || "");
+        return `${nota.letter.toLowerCase()}${accidentalKey}/${octave}`;
+    }
+
+    function crearNotaConAccidentales(VF, clef, keysData, tonalidadId = null, duration = "w", dedosMap = {}) {
     const keys = keysData.length
         ? keysData.map(k => k.key)
         : [clef === "bass" ? "d/3" : (clef === "alto" ? "c/4" : "b/4")];
@@ -108,15 +138,42 @@ window.VexFlowManager = (() => {
     const staveNote = new VF.StaveNote({
         clef,
         keys,
-        duration: "w"
+        duration: duration
     });
 
+
     keysData.forEach((k, index) => {
-        if (k.accidental) {
+        const accidental = accidentalVisibleSegunArmadura(k, tonalidadId);
+        
+        // Agregar accidental
+        if (accidental) {
             if (typeof staveNote.addAccidental === "function") {
-                staveNote.addAccidental(index, new VF.Accidental(k.accidental));
+                staveNote.addAccidental(index, new VF.Accidental(accidental));
             } else if (typeof staveNote.addModifier === "function") {
-                staveNote.addModifier(index, new VF.Accidental(k.accidental));
+                try {
+                    staveNote.addModifier(new VF.Accidental(accidental), index);
+                } catch(e) {
+                    staveNote.addModifier(index, new VF.Accidental(accidental));
+                }
+            }
+        }
+        
+        // Agregar Digitación (FretHandFinger)
+        if (dedosMap && typeof dedosMap[k.midi] !== "undefined") {
+            const numeroDedo = String(dedosMap[k.midi]);
+            const fingering = new VF.FretHandFinger(numeroDedo);
+            if (clef === "treble") {
+               fingering.setPosition(VF.Modifier.Position.ABOVE);
+            } else {
+               fingering.setPosition(VF.Modifier.Position.BELOW);
+            }
+            
+            if (typeof staveNote.addModifier === "function") {
+                try {
+                    staveNote.addModifier(fingering, index);
+                } catch(e) {
+                    staveNote.addModifier(index, fingering);
+                }
             }
         }
     });
@@ -136,7 +193,46 @@ window.VexFlowManager = (() => {
         return { bass, treble };
     }
 
-    function dibujarGrandStaff(acorde, tonalidadId = null, containerId = "stave") {
+    function moverGrupoAOctava(parsedNotes, minMidi, maxMidi) {
+        if (!parsedNotes || !parsedNotes.length) return parsedNotes || [];
+        let grupo = parsedNotes.map(n => ({ ...n }));
+        let promedio = grupo.reduce((acc, n) => acc + n.midi, 0) / grupo.length;
+
+        while (promedio < minMidi) {
+            grupo = grupo.map(n => ({
+                ...n,
+                octave: n.octave + 1,
+                midi: n.midi + 12
+            }));
+            promedio = grupo.reduce((acc, n) => acc + n.midi, 0) / grupo.length;
+        }
+        while (promedio > maxMidi) {
+            grupo = grupo.map(n => ({
+                ...n,
+                octave: n.octave - 1,
+                midi: n.midi - 12
+            }));
+            promedio = grupo.reduce((acc, n) => acc + n.midi, 0) / grupo.length;
+        }
+        return grupo;
+    }
+
+    function dividirAcordeProgresionGrandStaff(notas) {
+        const parsed = notas.map(parseSimpleNote).sort((a, b) => a.midi - b.midi);
+        if (!parsed.length) return { bass: [], treble: [] };
+        if (parsed.length === 1) return { bass: [parsed[0]], treble: [] };
+
+        // Para progresiones didácticas: bajo claro + acorde completo en mano derecha.
+        let bass = [parsed[0]];
+        let treble = parsed.slice(1);
+
+        bass = moverGrupoAOctava(bass, 38, 50);
+        treble = moverGrupoAOctava(treble, 60, 74);
+
+        return { bass, treble };
+    }
+
+    function dibujarGrandStaff(acorde, tonalidadId = null, containerId = "stave", digitacionObj = null) {
         if (!acorde || !Array.isArray(acorde.notas) || !acorde.notas.length) {
             throw new Error("Acorde inválido para render.");
         }
@@ -187,25 +283,49 @@ window.VexFlowManager = (() => {
 
         const grupos = dividirNotasPorRegistro(acorde.notas);
 
-        // Ottava markers omitted due to version incompatibility, using simple transposition for rendering logic
-        let visualTreble = grupos.treble;
+        // Ottava markers omitted due to version incompatibility.
+        // We still compute visual keys consistently so accidentals (including naturals) are explicit.
+        let trebleOctaveOffset = 0;
         if (grupos.treble.length) {
             const maxTreble = Math.max(...grupos.treble.map(n => n.midi));
-            if (maxTreble >= 84) {
-                visualTreble = grupos.treble.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave - 1}`}));
-            }
+            if (maxTreble >= 84) trebleOctaveOffset = -1;
         }
+        const visualTreble = grupos.treble.map(n => ({
+            ...n,
+            key: construirKeyVisual(n, n.octave + trebleOctaveOffset, tonalidadId)
+        }));
 
-        let visualBass = grupos.bass;
+        let bassOctaveOffset = 0;
         if (grupos.bass.length) {
             const minBass = Math.min(...grupos.bass.map(n => n.midi));
-            if (minBass <= 36) {
-                visualBass = grupos.bass.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave + 1}`}));
+            if (minBass <= 36) bassOctaveOffset = 1;
+        }
+        const visualBass = grupos.bass.map(n => ({
+            ...n,
+            key: construirKeyVisual(n, n.octave + bassOctaveOffset, tonalidadId)
+        }));
+
+        // Crear mapa de digitaciones MIDI -> Dedo
+        const mapaDedosTreble = {};
+        const mapaDedosBass = {};
+        
+        if (digitacionObj && digitacionObj.manos) {
+            if (digitacionObj.manos.derecha) {
+                digitacionObj.manos.derecha.notas.forEach((n, idx) => {
+                    const midi = parseSimpleNote(n).midi;
+                    mapaDedosTreble[midi] = digitacionObj.manos.derecha.dedos[idx];
+                });
+            }
+            if (digitacionObj.manos.izquierda) {
+                digitacionObj.manos.izquierda.notas.forEach((n, idx) => {
+                    const midi = parseSimpleNote(n).midi;
+                    mapaDedosBass[midi] = digitacionObj.manos.izquierda.dedos[idx];
+                });
             }
         }
 
         if (grupos.treble.length) {
-            const trebleNote = crearNotaConAccidentales(VF, "treble", visualTreble);
+            const trebleNote = crearNotaConAccidentales(VF, "treble", visualTreble, tonalidadId, "w", mapaDedosTreble);
             const trebleVoice = new VF.Voice({ num_beats: 4, beat_value: 4 });
             if (typeof trebleVoice.setStrict === "function") trebleVoice.setStrict(false);
             trebleVoice.addTickables([trebleNote]);
@@ -214,7 +334,7 @@ window.VexFlowManager = (() => {
         }
 
         if (grupos.bass.length) {
-            const bassNote = crearNotaConAccidentales(VF, "bass", visualBass);
+            const bassNote = crearNotaConAccidentales(VF, "bass", visualBass, tonalidadId, "w", mapaDedosBass);
             const bassVoice = new VF.Voice({ num_beats: 4, beat_value: 4 });
             if (typeof bassVoice.setStrict === "function") bassVoice.setStrict(false);
             bassVoice.addTickables([bassNote]);
@@ -256,22 +376,17 @@ window.VexFlowManager = (() => {
             // Notas
             if (data.notas && data.notas.length) {
                 const parsed = data.notas.map(parseSimpleNote);
-                
                 const maxMidi = Math.max(...parsed.map(n => n.midi));
                 const minMidi = Math.min(...parsed.map(n => n.midi));
-                
-                let visualNotes = parsed;
                 const visualOffset = data.displayOctaveOffset || 0;
+                const ottavaOffset = maxMidi > 84 ? -1 : (minMidi < 36 ? 1 : 0);
 
-                if (maxMidi > 84) { // Superior a C6
-                    visualNotes = parsed.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave - 1 + visualOffset}`}));
-                } else if (minMidi < 36) { // Inferior a C2
-                    visualNotes = parsed.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave + 1 + visualOffset}`}));
-                } else if (visualOffset !== 0) {
-                    visualNotes = parsed.map(n => ({...n, key: `${n.letter.toLowerCase()}${n.accidental}/${n.octave + visualOffset}`}));
-                }
+                const visualNotes = parsed.map(n => ({
+                    ...n,
+                    key: construirKeyVisual(n, n.octave + visualOffset + ottavaOffset, tonalidadId)
+                }));
 
-                const note = crearNotaConAccidentales(VF, data.clef || "treble", visualNotes);
+                const note = crearNotaConAccidentales(VF, data.clef || "treble", visualNotes, tonalidadId);
                 const voice = new VF.Voice({ num_beats: 4, beat_value: 4 });
                 if (typeof voice.setStrict === "function") voice.setStrict(false);
                 voice.addTickables([note]);
@@ -305,8 +420,137 @@ window.VexFlowManager = (() => {
         }
     }
 
-    function dibujarPentagrama(acorde, tonalidadId = null, containerId = "stave") {
-        dibujarGrandStaff(acorde, tonalidadId, containerId);
+    function dibujarProgresionScore(stavesData, tonalidadId = null, containerId = "stave") {
+        try {
+            const VF = getVF();
+            init(containerId);
+
+            const target = ensureContainer(containerId);
+            const width = computeWidth(target);
+            const staveWidth = width - 80;
+            const x = 30;
+            
+            const systemHeight = 110;
+            renderer.resize(width, stavesData.length * systemHeight + 100);
+
+            const ks = obtenerKeySignature(tonalidadId);
+            const staves = [];
+
+            stavesData.forEach((data, i) => {
+                const y = 30 + (i * systemHeight);
+                const stave = new VF.Stave(x, y, staveWidth);
+                stave.addClef(data.clef || "treble");
+                try {
+                    stave.addKeySignature(ks);
+                } catch (_) {
+                    stave.addKeySignature("C");
+                }
+                stave.setContext(context).draw();
+                staves.push(stave);
+
+                if (data.progresion && data.progresion.length) {
+                    const tickables = data.progresion.map(acordeNotas => {
+                        const parsed = acordeNotas.map(parseSimpleNote);
+                        const visualOffset = data.displayOctaveOffset || 0;
+                        const visualNotes = parsed.map(n => ({
+                            ...n,
+                            key: construirKeyVisual(n, n.octave + visualOffset, tonalidadId)
+                        }));
+                        return crearNotaConAccidentales(VF, data.clef || "treble", visualNotes, tonalidadId, "q");
+                    });
+
+                    const voice = new VF.Voice({ num_beats: data.progresion.length, beat_value: 4 });
+                    if (typeof voice.setStrict === "function") voice.setStrict(false);
+                    voice.addTickables(tickables);
+                    
+                    new VF.Formatter().joinVoices([voice]).format([voice], staveWidth - 50);
+                    voice.draw(context, stave);
+                }
+            });
+
+            if (staves.length > 1) {
+                const firstStave = staves[0];
+                const lastStave = staves[staves.length - 1];
+                new VF.StaveConnector(firstStave, lastStave).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(context).draw();
+                new VF.StaveConnector(firstStave, lastStave).setType(VF.StaveConnector.type.SINGLE_RIGHT).setContext(context).draw();
+                new VF.StaveConnector(firstStave, lastStave).setType(VF.StaveConnector.type.BRACE).setContext(context).draw();
+            }
+        } catch (e) {
+            console.error("Error en dibujarProgresionScore:", e);
+        }
+    }
+
+    function dibujarProgresionGrandStaff(progresion, tonalidadId = null, containerId = "stave") {
+        try {
+            const VF = getVF();
+            init(containerId);
+
+            const target = ensureContainer(containerId);
+            const width = computeWidth(target);
+            const staveWidth = width - 80;
+            const x = 30;
+            const yTreble = 30;
+            const yBass = 145;
+
+            const trebleStave = new VF.Stave(x, yTreble, staveWidth);
+            const bassStave = new VF.Stave(x, yBass, staveWidth);
+
+            const ks = obtenerKeySignature(tonalidadId);
+            trebleStave.addClef("treble");
+            bassStave.addClef("bass");
+            
+            try {
+                trebleStave.addKeySignature(ks);
+                bassStave.addKeySignature(ks);
+            } catch (_) {
+                trebleStave.addKeySignature("C");
+                bassStave.addKeySignature("C");
+            }
+
+            trebleStave.setContext(context).draw();
+            bassStave.setContext(context).draw();
+
+            new VF.StaveConnector(trebleStave, bassStave).setType(VF.StaveConnector.type.BRACE).setContext(context).draw();
+            new VF.StaveConnector(trebleStave, bassStave).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(context).draw();
+            new VF.StaveConnector(trebleStave, bassStave).setType(VF.StaveConnector.type.SINGLE_RIGHT).setContext(context).draw();
+
+            const trebleNotes = [];
+            const bassNotes = [];
+
+            progresion.forEach(acorde => {
+                const { treble, bass } = dividirAcordeProgresionGrandStaff(acorde.notas);
+                const trebleVisual = treble.map(n => ({
+                    ...n,
+                    key: construirKeyVisual(n, n.octave, tonalidadId)
+                }));
+                const bassVisual = bass.map(n => ({
+                    ...n,
+                    key: construirKeyVisual(n, n.octave, tonalidadId)
+                }));
+                trebleNotes.push(crearNotaConAccidentales(VF, "treble", trebleVisual, tonalidadId, "q"));
+                bassNotes.push(crearNotaConAccidentales(VF, "bass", bassVisual, tonalidadId, "q"));
+            });
+            const numBeats = (progresion && progresion.length) || 4;
+            const trebleVoice = new VF.Voice({ num_beats: numBeats, beat_value: 4 });
+            const bassVoice = new VF.Voice({ num_beats: numBeats, beat_value: 4 });
+            
+            if (typeof trebleVoice.setStrict === "function") trebleVoice.setStrict(false);
+            if (typeof bassVoice.setStrict === "function") bassVoice.setStrict(false);
+            
+            trebleVoice.addTickables(trebleNotes);
+            bassVoice.addTickables(bassNotes);
+
+            new VF.Formatter().joinVoices([trebleVoice, bassVoice]).format([trebleVoice, bassVoice], staveWidth - 50);
+            
+            trebleVoice.draw(context, trebleStave);
+            bassVoice.draw(context, bassStave);
+        } catch (e) {
+            console.error("Error en dibujarProgresionGrandStaff:", e);
+        }
+    }
+
+    function dibujarPentagrama(acorde, tonalidadId = null, containerId = "stave", digitacionObj = null) {
+        dibujarGrandStaff(acorde, tonalidadId, containerId, digitacionObj);
     }
 
     return {
@@ -314,6 +558,9 @@ window.VexFlowManager = (() => {
         limpiar,
         dibujarPentagrama,
         dibujarGrandStaff,
-        dibujarScore
+        dibujarScore,
+        dibujarProgresionScore,
+        dibujarProgresionGrandStaff
     };
+
 })();

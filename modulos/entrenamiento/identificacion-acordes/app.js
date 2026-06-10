@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
     const MODULO = "identificacion_acordes";
-    const RAICES = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+    const RAICES = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
     const TONALIDADES = ["C", "G", "D", "A", "E", "B", "F#", "C#", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
     const INVERSIONES = [
         { value: null, label: "Libre" },
@@ -86,6 +86,8 @@ document.addEventListener("DOMContentLoaded", () => {
         maestroLoading: document.getElementById("maestroLoading"),
         maestroError: document.getElementById("maestroError"),
         maestroClose: document.getElementById("maestroClose"),
+        maestroPregunta: document.getElementById("maestroPregunta"),
+        maestroAskBtn: document.getElementById("maestroAskBtn"),
         pianoVol: document.getElementById("pianoVol")
     };
 
@@ -150,6 +152,20 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.textContent = texto;
         btn.dataset.value = valor === null ? "null" : String(valor);
         return btn;
+    }
+
+    function notaVisibleSegunTonalidad(nota, tonalidad) {
+        try {
+            if (window.TONALIDADES && typeof window.TONALIDADES.notaVisibleEnTonalidad === "function") {
+                return window.TONALIDADES.notaVisibleEnTonalidad(nota, tonalidad || "C");
+            }
+        } catch (_) {}
+        return nota;
+    }
+
+    function nombreAcordeVisible(acorde, tonalidad) {
+        if (!acorde) return "";
+        return `${notaVisibleSegunTonalidad(acorde.raiz, tonalidad)}${tipoMeta(acorde.tipo).simbolo || ""}`;
     }
 
     function subirSemitono(nota) {
@@ -386,9 +402,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const rootGrid = document.getElementById("rootGrid");
     RAICES.forEach(raiz => {
+        const textoVisible = notaVisibleSegunTonalidad(raiz, state.manual.tonalidad);
         const btn = crearBoton(
             raiz,
-            raiz,
+            textoVisible,
             state.manual.raiz === raiz,
             raiz.includes("b") || raiz.includes("#") ? "accidental" : ""
         );
@@ -430,7 +447,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderInfoOculta() {
         if (!state.ejercicioActual) return;
 
-        els.chordName.textContent = state.revealActivo ? state.ejercicioActual.acorde.nombre : "Acorde oculto";
+        els.chordName.textContent = state.revealActivo
+            ? nombreAcordeVisible(state.ejercicioActual.acorde, state.ejercicioActual.tonalidad)
+            : "Acorde oculto";
         els.chordType.textContent = state.revealActivo
             ? tipoMeta(state.ejercicioActual.acorde.tipo).nombre
             : "Identifica la estructura armónica mostrada";
@@ -599,7 +618,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         RAICES.forEach(raiz => {
             const esAlterada = raiz.includes("b") || raiz.includes("#");
-            const btn = crearBoton(raiz, raiz, false, `root-btn ${esAlterada ? "accidental" : ""}`);
+            const btn = crearBoton(
+                raiz,
+                notaVisibleSegunTonalidad(raiz, state.ejercicioActual?.tonalidad || state.manual.tonalidad),
+                false,
+                `root-btn ${esAlterada ? "accidental" : ""}`
+            );
             btn.addEventListener("click", () => evaluarRaizAutomaticamente(raiz, btn));
             rootGrid.appendChild(btn);
         });
@@ -654,7 +678,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Mostrar raíz explícitamente y saltar al tipo
             const infoRaiz = document.createElement("div");
             infoRaiz.className = "root-info-text";
-            infoRaiz.innerHTML = `Raíz mostrada: <strong>${state.ejercicioActual.acorde.raiz}</strong>`;
+            infoRaiz.innerHTML = `Raíz mostrada: <strong>${notaVisibleSegunTonalidad(state.ejercicioActual.acorde.raiz, state.ejercicioActual.tonalidad)}</strong>`;
             els.optionsContainer.appendChild(infoRaiz);
             
             els.optionsContainer.appendChild(renderBloqueTipo());
@@ -666,7 +690,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Ya pasó la raíz, mostramos el éxito pasado arriba y los tipos abajo
                 const infoRaizOk = document.createElement("div");
                 infoRaizOk.className = "root-info-text correct-root";
-                infoRaizOk.innerHTML = `Raíz identificada: <strong>${state.respuestaCarga.raizManual}</strong> ✓`;
+                infoRaizOk.innerHTML = `Raíz identificada: <strong>${notaVisibleSegunTonalidad(state.respuestaCarga.raizManual, state.ejercicioActual.tonalidad)}</strong> ✓`;
                 els.optionsContainer.appendChild(infoRaizOk);
                 
                 els.optionsContainer.appendChild(renderBloqueTipo());
@@ -756,13 +780,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join("");
     }
 
-    async function consultarMaestro() {
-        if (!els.maestroBtn || !els.maestroPanel) return;
+    function prepararPanelMaestro() {
+        if (!els.maestroBtn || !els.maestroPanel) return false;
         els.maestroPanel.classList.remove("hidden");
         els.maestroContent.classList.add("hidden");
         els.maestroLoading.classList.remove("hidden");
         els.maestroError.classList.add("hidden");
         els.maestroContent.innerHTML = "";
+        return true;
+    }
+
+    function mostrarRespuestaMaestro(texto) {
+        els.maestroLoading.classList.add("hidden");
+        els.maestroError.classList.add("hidden");
+        els.maestroContent.classList.remove("hidden");
+        els.maestroContent.innerHTML = `<div class="maestro-texto">${texto.replace(/\n/g, "<br>")}</div>`;
+    }
+
+    function mostrarErrorMaestro(mensaje) {
+        if (els.maestroPanel) els.maestroPanel.classList.remove("hidden");
+        if (els.maestroLoading) els.maestroLoading.classList.add("hidden");
+        if (els.maestroError) {
+            els.maestroError.classList.remove("hidden");
+            els.maestroError.textContent = mensaje;
+        }
+    }
+
+    async function consultarMaestro() {
+        if (!prepararPanelMaestro()) return;
 
         const tipo = state.ejercicioActual && state.ultimaEvaluacion && !state.ultimaEvaluacion.correcto
             ? "retroalimentacion_error"
@@ -776,19 +821,41 @@ document.addEventListener("DOMContentLoaded", () => {
                 evaluacion: state.ultimaEvaluacion || null
             }) ?? Promise.resolve({ ok: false, error: "Maestro no disponible." }));
 
-            els.maestroLoading.classList.add("hidden");
-
             if (resp.ok && resp.respuesta) {
-                els.maestroContent.classList.remove("hidden");
-                els.maestroContent.innerHTML = `<div class="maestro-texto">${resp.respuesta.replace(/\n/g, "<br>")}</div>`;
+                mostrarRespuestaMaestro(resp.respuesta);
             } else {
-                els.maestroError.classList.remove("hidden");
-                els.maestroError.textContent = resp.error || "No se pudo conectar al Maestro.";
+                mostrarErrorMaestro(resp.error || "No se pudo conectar al Maestro.");
             }
         } catch (e) {
-            els.maestroLoading.classList.add("hidden");
-            els.maestroError.classList.remove("hidden");
-            els.maestroError.textContent = "Error de conexión con el Maestro.";
+            mostrarErrorMaestro("Error de conexión con el Maestro.");
+        }
+    }
+
+    async function preguntarAlMaestro() {
+        const consulta = els.maestroPregunta?.value?.trim();
+        if (!consulta) {
+            mostrarErrorMaestro("Escribe una pregunta para consultar al Maestro.");
+            return;
+        }
+
+        if (!prepararPanelMaestro()) return;
+
+        try {
+            const resp = await (window.AIEngine?.consultar?.({
+                tipo: "consulta_libre",
+                modulo: MODULO,
+                ejercicio: state.ejercicioActual || null,
+                evaluacion: state.ultimaEvaluacion || null,
+                consulta
+            }) ?? Promise.resolve({ ok: false, error: "Maestro no disponible." }));
+
+            if (resp.ok && resp.respuesta) {
+                mostrarRespuestaMaestro(resp.respuesta);
+            } else {
+                mostrarErrorMaestro(resp.error || "No se pudo conectar al Maestro.");
+            }
+        } catch (e) {
+            mostrarErrorMaestro("Error de conexión con el Maestro.");
         }
     }
 
@@ -911,7 +978,24 @@ document.addEventListener("DOMContentLoaded", () => {
             generarEjercicio();
 
             els.modeToggle.addEventListener("click", cambiarModo);
-            //els.hintBtn.addEventListener("click", pedirPista);
+
+            function pedirPista() {
+                if (!state.ejercicioActual) return;
+                state.pistaUsada = true;
+                
+                let hint = "";
+                if (window.Pistas && typeof Pistas.generar === "function") {
+                    // Genera una pista básica simulando un error en cualidad para forzar el mensaje
+                    hint = Pistas.generar(state.ejercicioActual.acorde, null, {correcto: false, categoriaPrincipal: "calidad"});
+                } else {
+                    hint = "Analiza los intervalos desde la nota más grave.";
+                }
+                
+                els.hintBox.textContent = hint;
+                els.hintBox.classList.add("show");
+            }
+
+            if (els.hintBtn) els.hintBtn.addEventListener("click", pedirPista);
             els.skipBtn.addEventListener("click", omitirEjercicio);
             els.nextBtn.addEventListener("click", generarEjercicio);
 
@@ -933,6 +1017,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (els.maestroBtn) els.maestroBtn.addEventListener("click", consultarMaestro);
             if (els.maestroClose) els.maestroClose.addEventListener("click", cerrarMaestroPanel);
+            if (els.maestroAskBtn) els.maestroAskBtn.addEventListener("click", preguntarAlMaestro);
+            if (els.maestroPregunta) {
+                els.maestroPregunta.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                        event.preventDefault();
+                        preguntarAlMaestro();
+                    }
+                });
+            }
 
             // Control de volumen dinámico
             const updateVolumeVisibility = () => {

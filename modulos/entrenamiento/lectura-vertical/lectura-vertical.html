@@ -102,6 +102,12 @@
                     </div>
                     <div id="maestroContent" class="maestro-content"></div>
                     <div id="maestroLoading" class="maestro-loading hidden">Pensando...</div>
+                    <div id="maestroError" class="maestro-error hidden"></div>
+                    <div class="maestro-question-box">
+                        <label for="maestroPregunta" class="maestro-question-label">Hazle una pregunta</label>
+                        <textarea id="maestroPregunta" class="maestro-question-input" rows="3" placeholder="Ejemplo: Maestro, ¿qué voces debo mirar primero para razonar este acorde?"></textarea>
+                        <button id="maestroAskBtn" class="maestro-ask-btn">Preguntar</button>
+                    </div>
                 </div>
             </section>
         </aside>
@@ -118,10 +124,11 @@
     <script src="../../../core/teoria/tonalidades.js"></script>
     <script src="../../../core/teoria/tipos-acorde.js"></script>
     <script src="../../../core/teoria/inversiones.js"></script>
+    <script src="../../../core/teoria/voicings.js"></script>
     <script src="../../../core/teoria/acordes.js"></script>
     <script src="../../../core/teoria/teoria.js"></script>
     <!-- NOTACION -->
-    <script src="../../../core/notacion/vexflow-setup.js"></script>
+    <script src="../../../core/notacion/vexflow-setup.js?v=2"></script>
     <!-- PERFIL -->
     <script src="../../../entrenamiento/perfil.js"></script>
     <!-- IA & AUDIO -->
@@ -134,6 +141,6 @@
     <script src="../../../entrenamiento/analizador-error.js"></script>
     <script src="../../../entrenamiento/pistas.js"></script>
     <!-- MODULO -->
-    <script src="./lectura-vertical.js"></script>
+    <script src="./lectura-vertical.js?v=2"></script>
 </body>
 </html>

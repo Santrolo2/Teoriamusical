@@ -365,6 +365,9 @@ const AIEngine = (() => {
                 ejercicios: perfil?.ejercicios,
                 correctas: perfil?.correctas,
                 precision: perfil?.precision,
+                precisionFamilia: perfil?.precisionFamilia,
+                precisionPatron: perfil?.precisionPatron,
+                progresoProgresiones: perfil?.progresoProgresiones,
                 debilidades: (perfil?.debilidades || []).slice(0, 5),
                 fortalezas: (perfil?.fortalezas || []).slice(0, 5),
                 confusiones: perfil?.confusiones || {}

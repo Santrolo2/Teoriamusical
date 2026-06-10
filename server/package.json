@@ -1,18 +1,25 @@
 {
   "name": "maestro-ia",
   "version": "1.0.0",
-  "description": "Backend para el Maestro de Música con IA",
+  "description": "Backend para el Maestro de Musica con IA",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "db:init": "node scripts/init-progressions-db.mjs",
+    "db:migrate:phase1": "node scripts/migrate-progressions-phase1.mjs",
+    "db:seed:phase1": "node scripts/seed-progressions-phase1.mjs",
+    "db:phase1": "npm run db:migrate:phase1 && npm run db:seed:phase1",
+    "db:seed:phase2": "node scripts/seed-progressions-phase2.mjs",
+    "db:phase2": "npm run db:phase1 && npm run db:seed:phase2"
   },
   "dependencies": {
-    "@google/genai": "^1.44.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "openai": "^4.52.0"
+    "express": "^4.21.0"
   }
 }

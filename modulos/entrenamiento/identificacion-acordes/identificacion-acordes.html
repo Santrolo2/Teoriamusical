@@ -77,6 +77,10 @@ Grand staff
     Arpegiar
 </button>
 
+<button id="hintBtn" class="hint-btn">
+    Pista
+</button>
+
 <button id="skipBtn">
 Omitir
 </button>
@@ -196,6 +200,11 @@ Manual
   </div>
   <div id="maestroLoading" class="maestro-loading hidden">Pensando...</div>
   <div id="maestroError" class="maestro-error hidden"></div>
+  <div class="maestro-question-box">
+    <label for="maestroPregunta" class="maestro-question-label">Hazle una pregunta</label>
+    <textarea id="maestroPregunta" class="maestro-question-input" rows="3" placeholder="Ejemplo: Maestro, ¿cómo puedo pensar mejor este acorde sin que me diga la respuesta?"></textarea>
+    <button id="maestroAskBtn" class="maestro-ask-btn">Preguntar</button>
+  </div>
 </div>
 
 </section>
@@ -217,6 +226,7 @@ Manual
 <script src="../../../core/teoria/tonalidades.js"></script>
 <script src="../../../core/teoria/tipos-acorde.js"></script>
 <script src="../../../core/teoria/inversiones.js"></script>
+<script src="../../../core/teoria/voicings.js"></script>
 <script src="../../../core/teoria/acordes.js"></script>
 <script src="../../../core/teoria/teoria.js"></script>
 

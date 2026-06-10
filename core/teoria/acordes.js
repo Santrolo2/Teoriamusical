@@ -11,6 +11,8 @@ const ACORDES = (() => {
 // --------------------------------------------
 // HELPERS
 // --------------------------------------------
+const TIPOS_ACORDE = window.TIPOS_ACORDE;
+const NOTAS = window.NOTAS;
 
 function rotar(array, pasos){
 
@@ -175,7 +177,7 @@ return raiz + t.simbolo;
 // CONSTRUIR ACORDE COMPLETO
 // --------------------------------------------
 
-function construir(raiz,tipo,inversion=0,octavaBase=4){
+function construir(raiz, tipo, inversion=0, octavaBase=4, style="random"){
 
 const tipoAcorde = TIPOS_ACORDE.obtener(tipo);
 
@@ -185,9 +187,20 @@ throw new Error("Inversión inválida");
 
 const notasBase = construirNotas(raiz,tipo);
 
-const notasInvertidas = aplicarInversion(notasBase,inversion);
+let notas;
+let estiloElegido = style;
 
-const notas = asignarOctavas(notasInvertidas,octavaBase);
+if (estiloElegido === "random") {
+    // 50% chance of being spread across both staves (chorale style)
+    estiloElegido = Math.random() > 0.5 ? "chorale" : "close";
+}
+
+if (estiloElegido === "chorale" && typeof window !== "undefined" && window.VOICINGS) {
+    notas = window.VOICINGS.generarChorale(notasBase, inversion);
+} else {
+    const notasInvertidas = aplicarInversion(notasBase,inversion);
+    notas = asignarOctavas(notasInvertidas,octavaBase);
+}
 
 return {
 

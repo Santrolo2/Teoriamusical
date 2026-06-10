@@ -139,11 +139,11 @@ button {
 .sidebar-section h3,
 .compact-options-section h3 {
     color: #722f37;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 1.4px;
-    margin-bottom: 8px;
-    padding-bottom: 5px;
+    letter-spacing: 1.2px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
     border-bottom: 1px dashed #d4b68a;
     font-weight: normal;
 }
@@ -744,185 +744,225 @@ button {
         display: none !important;
     }
 
-    .app-layout {
-        grid-template-columns: 1fr;
-        padding: 6px;
-        gap: 0;
-    }
-
     body {
         padding: 0;
-        overflow-y: auto; /* IMPORTANTE: Devolver la capacidad de hacer scroll libre */
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden; /* Cero scroll */
+        height: 100dvh;
+    }
+
+    .app-layout {
+        grid-template-columns: 1fr;
+        padding: 4px;
+        gap: 0;
+        height: 100dvh;
+        overflow: hidden;
     }
 
     .main-panel {
-        padding: 8px 4px;
-        gap: 8px;
-        overflow-y: auto;
-        min-height: 100dvh;
-        height: auto;
+        padding: 4px;
+        gap: 4px;
+        overflow: hidden;
+        height: 100dvh;
+        max-height: 100dvh;
         display: flex;
         flex-direction: column;
-    }
-
-    .app-layout {
-        min-height: 100dvh;
-        overflow-y: auto;
-    }
-
-    .sidebar {
-        display: none; /* Hide supplementary stats to guarantee single-screen fit */
+        justify-content: flex-start;
+        border: none;
+        box-shadow: none;
     }
 
     .exercise-header {
-        border-bottom: 1px solid #722f37;
-        padding-bottom: 2px;
-        margin-bottom: 2px;
-        flex-wrap: nowrap;
-        gap: 2px;
-    }
-
-    .exercise-title h1 {
-        font-size: 0.9rem;
-        margin: 2px 0;
-    }
-    
-    .exercise-title a {
-        font-size: 0.7rem;
-        margin-bottom: 2px;
-    }
-
-    .exercise-title h1 {
-        font-size: 1.1rem;
+        display: none; /* Ahorramos espacio crítico */
     }
 
     .mode-controls {
+        display: flex;
         flex-direction: row;
         align-items: center;
         flex-wrap: nowrap;
-        min-width: 0;
         padding: 5px 8px;
+        min-width: 0;
         gap: 6px;
+        box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
     }
 
-    #modeLabel { font-size: 0.72rem; }
-    #modeHint  { display: none; }
-
-    #modeToggle {
-        min-height: 32px;
-        padding: 3px 10px;
-        font-size: 0.78rem;
+    #modeLabel {
+        font-size: 0.72rem;
         white-space: nowrap;
     }
 
-    /* ─── Context card (tonalidad, inversión) ─── */
-    .context-card {
-        padding: 4px 8px;
-        font-size: 0.78rem;
+    #modeToggle {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        min-height: 32px;
     }
 
-    /* ─── Staff: shorter and centred ─── */
+    #modeHint {
+        display: none;
+    }
+
+    /* COMPACTACIÓN DE SELECTORES MANUALES */
+    .manual-controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 3px;
+        margin-bottom: 2px;
+    }
+
+    .selector-block {
+        padding: 3px;
+    }
+
+    .selector-block h3 {
+        display: none; /* Ocultar títulos para ganar altura */
+    }
+
+    .key-grid, .compact-grid, .compact-inversion-selector {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 2px;
+    }
+
+    .compact-inversion-selector {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .key-btn, .inv-btn, .root-btn {
+        min-height: 28px;
+        font-size: 0.72rem;
+        padding: 0 1px;
+        border-width: 1px;
+    }
+
+    /* PENTAGRAMA EXTRA XL (RECORTADO) */
     .compact-staff-section {
-        padding: 0;
         min-height: 0;
-        flex-shrink: 0;
+        padding: 0;
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
     }
 
     .stave-host {
-        padding: 0;
-        margin: 0;
+        min-height: 140px;
+        height: 140px;
+        overflow: hidden;
+        border: 1px solid #e6d3b4;
         display: flex;
         justify-content: center;
-        align-items: center;
-        overflow: hidden; /* Cortamos los márgenes blancos */
-        height: 180px; /* Alto fijo de caja para no estirar la pantalla */
-        position: relative;
+        align-items: flex-start;
+        background: white;
     }
 
+    /* Recorte estratégico del SVG de VexFlow */
     .stave-host svg {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1.6); /* Centrado y Ampliado */
-        width: 100%;
-        height: auto;
+        margin-top: -45px; /* Sube las líneas del pentagrama */
+        transform: scale(1.1); /* Lo hace más grande */
+        transform-origin: top center;
     }
 
-    /* ─── Skip / Omitir actions ─── */
+    .compact-chord-info {
+        padding: 2px;
+        margin-bottom: 2px;
+    }
+
+    #chordName {
+        font-size: 1.25rem;
+        margin-bottom: 0;
+    }
+
+    #chordType {
+        font-size: 0.75rem;
+    }
+
+    #chordInversion {
+        display: none; /* Ocultar para ganar espacio */
+    }
+
+    /* ACCIONES COMPACTAS */
     .staff-actions {
-        flex-direction: row;
-        gap: 6px;
-    }
-
-    #skipBtn, #nextBtn {
-        flex: 1;
-        min-height: 30px;
-        font-size: 0.75rem;
-        padding: 2px;
-    }
-
-    /* ─── Root buttons: 6-column grid ─── */
-    .root-selector-grid {
-        grid-template-columns: repeat(6, 1fr);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* 4 en una fila */
         gap: 4px;
-    }
-
-    .root-btn {
-        min-height: 40px;
-        font-size: 0.85rem;
-        padding: 4px;
-    }
-
-    /* ─── Type buttons: 3×3 grid ─── */
-    .type-selector-grid {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        flex-direction: unset;
-    }
-
-    .type-btn {
-        flex: unset;
-        min-height: 38px;
-        font-size: 0.75rem;
-        padding: 2px;
-        line-height: 1.1;
-    }
-
-    /* ─── Evaluate button ─── */
-    .evaluate-btn {
-        min-height: 42px;
-        padding: 6px;
-        font-size: 0.9rem;
-    }
-
-    /* ─── Root-visibility toggle (hide on mobile, not needed) ─── */
-    #rootVisibilityToggle {
-        display: none !important;
-    }
-
-    /* ─── Maestro IA section: compact ─── */
-    .maestro-section {
         margin-top: 4px;
     }
 
-    .maestro-btn {
-        padding: 7px 10px;
-        font-size: 0.85rem;
+    .staff-actions button {
+        padding: 8px 4px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
     }
 
-    /* ─── Options column fills width ─── */
-    .options-column {
+    /* OPCIONES DE RESPUESTA */
+    .two-step-options {
+        gap: 4px;
+        margin-top: 2px;
+    }
+
+    .step-section {
+        padding: 4px;
+    }
+
+    .step-section h4 {
+        font-size: 0.65rem;
+        margin-bottom: 3px;
+        padding-bottom: 2px;
+    }
+
+    .root-selector-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3px;
+    }
+
+    .type-selector-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
+    }
+
+    .type-btn {
+        min-height: 32px;
+        font-size: 0.68rem;
+        padding: 2px;
+        flex: none;
         width: 100%;
     }
 
-    .compact-core {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        flex: 1;
-        overflow: visible;
+    .root-btn {
+        min-height: 32px;
+    }
+
+    .root-info-text {
+        font-size: 0.85rem;
+        padding: 4px 8px;
+    }
+
+    .evaluate-btn {
+        padding: 10px;
+        font-size: 1rem;
+    }
+
+    /* FEEDBACK COMPACTO */
+    .compact-feedback {
+        margin-top: 4px;
+        gap: 4px;
+    }
+
+    .feedback, .hint-text {
+        min-height: 32px;
+        padding: 6px;
+        font-size: 0.75rem;
+    }
+
+    /* HIDDEN ELEMENTS */
+    .compact-options-section h3, 
+    .compact-staff-section h3 {
+        display: none;
+    }
+
+    #exerciseContext {
+        display: none; /* El contexto quita mucho espacio en móvil */
     }
 }
 
@@ -1038,4 +1078,52 @@ button {
     background: #fce8e8;
     color: #a03030;
     font-size: 0.9rem;
+}
+
+.maestro-question-box {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-top: 1px solid #eadcc6;
+    background: #f7f1e8;
+}
+
+.maestro-question-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #722f37;
+}
+
+.maestro-question-input {
+    width: 100%;
+    resize: vertical;
+    min-height: 78px;
+    padding: 10px 12px;
+    border: 1px solid #d4b68a;
+    border-radius: 6px;
+    font: inherit;
+    line-height: 1.4;
+    color: #1a2b4c;
+    background: #fffdf9;
+    box-sizing: border-box;
+}
+
+.maestro-question-input:focus {
+    outline: 2px solid rgba(114, 47, 55, 0.18);
+    border-color: #722f37;
+}
+
+.maestro-ask-btn {
+    justify-self: start;
+    padding: 10px 14px;
+    background: #1a2b4c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.maestro-ask-btn:hover {
+    background: #243b69;
 }

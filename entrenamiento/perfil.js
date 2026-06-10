@@ -17,6 +17,10 @@ const PerfilUsuario = {
         porGrado: {},
         porRaiz: {},
         confusiones: {},
+        progresoProgresiones: {
+            familia: { total: 0, correctas: 0, tiempos: [] },
+            patron: { total: 0, correctas: 0, tiempos: [] }
+        },
         /* Diagnóstico pedagógico (compatible con AnalizadorError / IdentificacionAcordes) */
         erroresPorCategoriaDiagnostico: {},
         historialDiagnostico: []
@@ -34,6 +38,7 @@ const PerfilUsuario = {
         });
 
         this.cargar();
+        this.normalizarDatos();
     },
 
     asegurarCategoria: function(obj, clave) {
@@ -173,6 +178,41 @@ const PerfilUsuario = {
         this.guardar();
     },
 
+    registrarEtapaProgresion: function(ejercicio = {}, evaluacion = {}) {
+        const etapa = evaluacion?.etapa === 'progresion' ? 'patron' : 'familia';
+        const bloque = this.datos.progresoProgresiones?.[etapa];
+        if (!bloque) return;
+
+        const tiempo = Number(evaluacion?.tiempoRespuesta ?? 0);
+        bloque.total++;
+        if (evaluacion?.correcto) {
+            bloque.correctas++;
+        }
+        bloque.tiempos.push(tiempo);
+        if (bloque.tiempos.length > 300) {
+            bloque.tiempos.shift();
+        }
+
+        this.datos.historial.unshift({
+            modulo: 'identificacion_progresiones',
+            etapa,
+            progresion: ejercicio?.nombre || ejercicio?.progStr || 'Sin nombre',
+            familia: ejercicio?.familia || 'sin_familia',
+            nivel: ejercicio?.nivel ?? null,
+            tonalidad: ejercicio?.tonalidad || 'Sin tonalidad',
+            correcto: !!evaluacion?.correcto,
+            tiempo,
+            respondido: evaluacion?.respuestaUsuario?.nombre || evaluacion?.respuestaUsuario?.familia || null,
+            fecha: new Date().toLocaleString()
+        });
+
+        if (this.datos.historial.length > 300) {
+            this.datos.historial.pop();
+        }
+
+        this.guardar();
+    },
+
     promedio: function(lista) {
         if (!lista || !lista.length) return '--';
         return (lista.reduce((a, b) => a + b, 0) / lista.length).toFixed(1);
@@ -287,6 +327,10 @@ const PerfilUsuario = {
             : 0;
 
         const velocidad = this.promedio(this.datos.tiempos);
+        const fam = this.datos.progresoProgresiones?.familia || { total: 0, correctas: 0, tiempos: [] };
+        const pat = this.datos.progresoProgresiones?.patron || { total: 0, correctas: 0, tiempos: [] };
+        const precisionFamilia = fam.total > 0 ? Math.round((fam.correctas / fam.total) * 100) : 0;
+        const precisionPatron = pat.total > 0 ? Math.round((pat.correctas / pat.total) * 100) : 0;
 
         return {
             ejercicios: this.datos.ejercicios,
@@ -294,6 +338,8 @@ const PerfilUsuario = {
             racha: this.datos.racha,
             mejorRacha: this.datos.mejorRacha,
             precision: precision,
+            precisionFamilia,
+            precisionPatron,
             velocidad: velocidad,
             estadisticas: this.datos.estadisticas,
             errores: this.datos.errores,
@@ -307,7 +353,21 @@ const PerfilUsuario = {
             debilidadesDiagnostico: this.detectarDebilidadesDiagnostico(),
             perfilPedagogico: this.obtenerPerfilPedagogico(),
             recomendacion: this.obtenerRecomendacion(),
-            confusiones: this.datos.confusiones
+            confusiones: this.datos.confusiones,
+            progresoProgresiones: {
+                familia: {
+                    total: fam.total,
+                    correctas: fam.correctas,
+                    precision: precisionFamilia,
+                    tiempoPromedio: this.promedio(fam.tiempos)
+                },
+                patron: {
+                    total: pat.total,
+                    correctas: pat.correctas,
+                    precision: precisionPatron,
+                    tiempoPromedio: this.promedio(pat.tiempos)
+                }
+            }
         };
     },
 
@@ -325,6 +385,7 @@ const PerfilUsuario = {
                 console.error('Error cargando perfil:', e);
             }
         }
+        this.normalizarDatos();
     },
 
     normalizarDatos: function() {
@@ -355,6 +416,24 @@ const PerfilUsuario = {
     if (!this.datos.confusiones || typeof this.datos.confusiones !== 'object') {
         this.datos.confusiones = {};
     }
+    if (!this.datos.progresoProgresiones || typeof this.datos.progresoProgresiones !== 'object') {
+        this.datos.progresoProgresiones = {
+            familia: { total: 0, correctas: 0, tiempos: [] },
+            patron: { total: 0, correctas: 0, tiempos: [] }
+        };
+    }
+    if (!this.datos.progresoProgresiones.familia) {
+        this.datos.progresoProgresiones.familia = { total: 0, correctas: 0, tiempos: [] };
+    }
+    if (!this.datos.progresoProgresiones.patron) {
+        this.datos.progresoProgresiones.patron = { total: 0, correctas: 0, tiempos: [] };
+    }
+    if (!Array.isArray(this.datos.progresoProgresiones.familia.tiempos)) {
+        this.datos.progresoProgresiones.familia.tiempos = [];
+    }
+    if (!Array.isArray(this.datos.progresoProgresiones.patron.tiempos)) {
+        this.datos.progresoProgresiones.patron.tiempos = [];
+    }
     if (!this.datos.erroresPorCategoriaDiagnostico || typeof this.datos.erroresPorCategoriaDiagnostico !== 'object') {
         this.datos.erroresPorCategoriaDiagnostico = {};
     }
@@ -384,6 +463,11 @@ const PerfilUsuario = {
     },
 
     registrarIntento: function({ modulo, ejercicio, evaluacion }) {
+        if (modulo === 'identificacion_progresiones' && evaluacion?.etapa) {
+            this.registrarEtapaProgresion(ejercicio || {}, evaluacion || {});
+            return;
+        }
+
         const acorde = ejercicio?.acorde || (ejercicio?.respuestaCorrecta ? {
             tipo: ejercicio.respuestaCorrecta.tipoId,
             tonalidadId: ejercicio.tonalidad || ejercicio.respuestaCorrecta?.tonalidadId,

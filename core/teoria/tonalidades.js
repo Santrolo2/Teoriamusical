@@ -165,21 +165,78 @@ nota:nota.letter + nota.accidental
 
 }
 
+function obtener(nombre, tipo = "major"){
+
+if(tipo === "major") return mayor(nombre);
+if(tipo === "minor" || tipo === "natural_minor") return menor(nombre);
+
+throw new Error("Tipo de tonalidad no soportado: " + tipo);
+
+}
+
+function mapaArmadura(nombre, tipo = "major"){
+
+const tonalidad = obtener(nombre, tipo);
+const mapa = { C:"", D:"", E:"", F:"", G:"", A:"", B:"" };
+
+for(const nota of tonalidad.armadura){
+const match = String(nota).match(/^([A-G])([b#]{0,2})$/);
+if(!match) continue;
+mapa[match[1]] = match[2] || "";
+}
+
+return mapa;
+
+}
+
+function notaVisibleEnTonalidad(notaLiteral, tonalidadNombre, tipo = "major"){
+
+if(!notaLiteral || !tonalidadNombre){
+return notaLiteral;
+}
+
+const match = String(notaLiteral).match(/^([A-Ga-g])(bb|b|##|#)?$/);
+if(!match){
+return notaLiteral;
+}
+
+const letra = match[1].toUpperCase();
+const accidentalReal = match[2] || "";
+const accidentalEsperado = mapaArmadura(tonalidadNombre, tipo)[letra] || "";
+
+let accidentalVisible = accidentalReal;
+
+if(accidentalReal === accidentalEsperado){
+accidentalVisible = "";
+} else if(accidentalReal === "" && accidentalEsperado){
+accidentalVisible = "\u266e";
+} else {
+accidentalVisible = accidentalReal
+    .replace(/bb/g, "\u266d\u266d")
+    .replace(/##/g, "\u266f\u266f")
+    .replace(/b/g, "\u266d")
+    .replace(/#/g, "\u266f");
+}
+
+return letra + accidentalVisible;
+
+}
+
 
 // --------------------------------------------
 // EXPORT
 // --------------------------------------------
 
-return {
-
-mayor,
-menor,
-relativaMayor,
-relativaMenor,
-grados
-
-};
-
+    return {
+        obtener,
+        mayor,
+        menor,
+        relativaMayor,
+        relativaMenor,
+        grados,
+        mapaArmadura,
+        notaVisibleEnTonalidad
+    };
 })();
 
 if (typeof window !== "undefined") {

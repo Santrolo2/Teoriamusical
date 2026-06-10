@@ -1,7 +1,7 @@
 const GeneradorEjercicios = (() => {
     "use strict";
 
-    const RAICES = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+    const RAICES = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
     const TONALIDADES_MAYORES = ["C", "G", "D", "A", "E", "B", "F#", "C#", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
 
     function elegir(lista) {
@@ -69,23 +69,40 @@ const GeneradorEjercicios = (() => {
     function resolverConfig(config = {}) {
         const tipos = obtenerTipos();
 
-        const raiz = config.raiz || elegir(RAICES);
-        const tonalidad = config.tonalidad || elegir(TONALIDADES_MAYORES);
+        let raiz = config.raiz;
+        let tonalidad = config.tonalidad;
+        let tipo = config.tipo;
+        let inversion = config.inversion;
+
+        // Adaptatividad: inyectar debilidades específicas
+        if (!raiz && !tonalidad && !tipo && !Number.isInteger(inversion) && window.PerfilUsuario) {
+            const debilidades = PerfilUsuario.detectarDebilidades();
+            if (debilidades && debilidades.length > 0 && Math.random() < 0.6) {
+                // 60% de probabilidad de forzar una de las peores debilidades
+                const d = elegir(debilidades.slice(0, 3));
+                if (d.categoria === "tipo") tipo = d.clave;
+                if (d.categoria === "tonalidad") tonalidad = d.clave;
+                if (d.categoria === "raiz") raiz = d.clave;
+                if (d.categoria === "inversion") inversion = parseInt(d.clave.replace("inv_", ""), 10);
+            }
+        }
+
+        raiz = raiz || elegir(RAICES);
+        tonalidad = tonalidad || elegir(TONALIDADES_MAYORES);
 
         const tiposPermitidos = Array.isArray(config.tiposPermitidos) && config.tiposPermitidos.length
             ? config.tiposPermitidos.filter(t => tipos.includes(t))
             : tipos;
 
-        let tipo = config.tipo || elegir(tiposPermitidos);
+        tipo = tipo || elegir(tiposPermitidos);
 
         if (!tiposPermitidos.includes(tipo)) {
             tipo = elegir(tiposPermitidos);
         }
 
-        let inversion;
-        if (Number.isInteger(config.inversion)) {
+        if (Number.isInteger(inversion)) {
             const validas = inversionesValidas(tipo);
-            inversion = validas.includes(config.inversion) ? config.inversion : validas[0];
+            inversion = validas.includes(inversion) ? inversion : validas[0];
         } else {
             inversion = elegir(inversionesValidas(tipo));
         }

@@ -20,7 +20,9 @@ return {
     inversiones: INVERSIONES,
 
     // Contexto tonal
-    tonalidades: TONALIDADES
+    tonalidades: TONALIDADES,
+    armonia: typeof ARMONIA !== "undefined" ? ARMONIA : (typeof window !== "undefined" ? window.ARMONIA : null),
+    progresionesData: typeof PROGRESIONES_DATA !== "undefined" ? PROGRESIONES_DATA : (typeof window !== "undefined" ? window.PROGRESIONES_DATA : null)
 
 };
 

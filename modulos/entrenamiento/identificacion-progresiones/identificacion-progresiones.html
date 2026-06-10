@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progresiones</title>
+<link rel="stylesheet" href="../identificacion-acordes/estilo.css?v=3">
+<style>
+    .landing-screen {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 24px;
+        background: #f7f5f0;
+    }
+    .landing-screen.hidden {
+        display: none;
+    }
+    .landing-screen h1 {
+        color: #1a2b4c;
+        margin: 0 0 14px;
+    }
+    .landing-options {
+        width: min(920px, 100%);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 14px;
+    }
+    .landing-card {
+        border: 2px solid #1a2b4c;
+        background: #fff;
+        color: #1a2b4c;
+        padding: 18px;
+        cursor: pointer;
+        text-align: left;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    .landing-card:hover {
+        border-color: #722f37;
+        color: #722f37;
+    }
+    .landing-card i {
+        margin-right: 8px;
+    }
+    .flow-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .flow-btn {
+        border: 2px solid #1a2b4c;
+        background: white;
+        color: #1a2b4c;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .flow-btn.primary {
+        background: #722f37;
+        border-color: #722f37;
+        color: #fff;
+    }
+    .select-control,
+    .filter-input {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #d4b68a;
+        background: #fff;
+        color: #1a2b4c;
+        padding: 8px 10px;
+        font-family: "Georgia", "Times New Roman", serif;
+        font-size: 0.95rem;
+    }
+    .filter-input {
+        margin-top: 6px;
+    }
+    .composer-card {
+        border: 1px solid #d7b892;
+        background: #fffaf3;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+    .composer-card strong {
+        color: #722f37;
+    }
+    .composer-works {
+        margin-top: 6px;
+        color: #2f3e5d;
+        font-size: .92rem;
+    }
+    .ux-guide {
+        display: none;
+    }
+    .ux-guide-top {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        gap: 10px;
+    }
+    .ux-card {
+        border: 2px solid #1a2b4c;
+        background: white;
+        padding: 10px 12px;
+    }
+    .ux-card h4 {
+        margin: 0 0 4px;
+        color: #1a2b4c;
+        font-size: 1rem;
+    }
+    .ux-card p {
+        margin: 0;
+        color: #2f3e5d;
+        font-size: 0.92rem;
+    }
+    .ux-card.active {
+        border-color: #722f37;
+        background: #fff5f7;
+    }
+    .ux-status {
+        margin-top: 10px;
+        border-top: 1px dashed #d7b892;
+        padding-top: 10px;
+        display: grid;
+        gap: 6px;
+    }
+    .ux-status-line {
+        font-size: 0.95rem;
+        color: #1a2b4c;
+    }
+    .ux-status-line strong {
+        color: #722f37;
+    }
+    .progression-options-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .prog-btn {
+        background: white;
+        border: 2px solid #1a2b4c;
+        color: #1a2b4c;
+        padding: 12px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+    }
+    .prog-btn:hover {
+        background: #f0f4f8;
+        transform: translateX(5px);
+    }
+    .prog-btn.active {
+        background: #722f37;
+        color: white;
+        border-color: #722f37;
+    }
+    .prog-btn.correct { background: #e8f4ed; color: #2d6a4f; border-color: #2d6a4f; }
+    .prog-btn.incorrect { background: #fff1f1; color: #9b2226; border-color: #9b2226; }
+    .panel-empty {
+        font-size: 0.92rem;
+        color: #2f3e5d;
+        background: #fff;
+        border: 1px dashed #d4b68a;
+        padding: 10px;
+    }
+    .analysis-panel {
+        display: grid;
+        gap: 8px;
+    }
+    .analysis-item {
+        background: #fff;
+        border: 1px solid #e8d6ba;
+        padding: 8px 10px;
+    }
+    .analysis-item strong {
+        color: #722f37;
+    }
+    .degree-list {
+        display: grid;
+        gap: 6px;
+    }
+    .degree-item {
+        background: #fff;
+        border: 1px solid #e8d6ba;
+        padding: 8px 10px;
+    }
+    .degree-item strong {
+        color: #1a2b4c;
+    }
+    .degree-meta {
+        color: #2f3e5d;
+        font-size: 0.88rem;
+        line-height: 1.35;
+        margin-top: 3px;
+    }
+    .filter-checklist {
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+        gap: 6px 10px;
+        color: #1a2b4c;
+        font-size: 0.9rem;
+    }
+    .filter-checklist label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .badge-row {
+        margin-top: 6px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .badge {
+        border: 1px solid #b78a73;
+        color: #722f37;
+        background: #fff6ef;
+        font-size: 0.75rem;
+        padding: 1px 6px;
+        border-radius: 999px;
+    }
+    .route-panel {
+        display: grid;
+        gap: 8px;
+    }
+    .route-head {
+        background: #fff;
+        border: 1px solid #e8d6ba;
+        padding: 8px 10px;
+        color: #1a2b4c;
+        font-size: 0.9rem;
+    }
+    .route-levels {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .route-level {
+        text-align: center;
+        border: 1px solid #d9b792;
+        background: #fff;
+        color: #1a2b4c;
+        padding: 5px 4px;
+        font-size: 0.78rem;
+    }
+    .route-level.active {
+        border-color: #722f37;
+        color: #722f37;
+        background: #fff2f4;
+        font-weight: 700;
+    }
+    .route-level.locked {
+        opacity: 0.45;
+    }
+    .route-step {
+        background: #fff;
+        border: 1px solid #e8d6ba;
+        padding: 8px 10px;
+        color: #1a2b4c;
+        font-size: 0.9rem;
+        line-height: 1.35;
+    }
+    .route-step strong {
+        color: #722f37;
+    }
+    .route-step small {
+        color: #2f3e5d;
+    }
+</style>
+</head>
+<body>
+<div id="landingScreen" class="landing-screen">
+    <h1>Progresiones</h1>
+    <div class="landing-options">
+        <button class="landing-card" data-target="identificacion"><i class="fas fa-headphones"></i>Identificar progresiones</button>
+        <button class="landing-card" data-target="generador"><i class="fas fa-book-open"></i>Diccionario de progresiones</button>
+    </div>
+</div>
+
+<div id="mainInterface" class="app-layout hidden">
+<main class="main-panel">
+<header class="exercise-header">
+<div class="exercise-title">
+    <a href="../../../index.html" style="text-decoration:none; color:#722f37; font-size:0.8rem; display:block; margin-bottom:5px;">&larr; Volver al menu</a>
+    <h1>Progresiones</h1>
+</div>
+<div class="mode-controls">
+<span id="modeLabel">Guiado</span>
+<button id="backToLandingBtn">Opciones</button>
+<button id="modeToggle" style="display:none;">Cambiar modo</button>
+<div id="modeHint">Progresiones</div>
+</div>
+</header>
+
+<section id="uxGuide" class="ux-guide">
+    <div class="ux-guide-top">
+        <article id="uxCardGenerador" class="ux-card">
+            <h4>Construir</h4>
+        </article>
+        <article id="uxCardIdentificar" class="ux-card">
+            <h4>Identificar</h4>
+        </article>
+    </div>
+    <div class="ux-status">
+        <div id="uxStatusTitle" class="ux-status-line"></div>
+        <div id="uxStatusAction" class="ux-status-line"></div>
+        <div id="uxStatusScope" class="ux-status-line"></div>
+        <div id="uxStatusAudio" class="ux-status-line"></div>
+    </div>
+</section>
+
+<section id="modeControlsHost"></section>
+
+<section class="compact-core">
+<div class="compact-staff-section">
+<div class="compact-chord-info">
+<div id="chordName">Progresion oculta</div>
+<div id="chordType">Identifica la progresion armonica</div>
+<div id="chordInversion">Lectura Horizontal/Vertical</div>
+</div>
+
+<div id="stave" class="stave-host"></div>
+
+<div class="staff-actions">
+<button id="playBtn">Escuchar</button>
+<button id="hintBtn" class="hint-btn">Pista</button>
+<button id="skipBtn">Omitir</button>
+<button id="nextBtn">Siguiente</button>
+</div>
+
+<div class="compact-feedback">
+<div id="feedback" class="feedback"></div>
+<div id="hintBox" class="hint-text">Paso 1: reconoce la familia funcional. Paso 2: identifica el patron exacto.</div>
+</div>
+</div>
+
+<div class="options-column">
+<section class="compact-options-section">
+<h3 id="optionsTitle">Opciones</h3>
+<div id="optionsContainer" class="progression-options-grid"></div>
+</section>
+<section class="compact-options-section">
+<h3>Análisis</h3>
+<div id="analysisPanel" class="panel-empty">Selecciona una progresión para ver su análisis.</div>
+</section>
+<section class="compact-options-section">
+<h3>Ruta didáctica</h3>
+<div id="didacticRoutePanel" class="panel-empty">Selecciona una progresión para ver una ruta por niveles.</div>
+</section>
+<section class="compact-options-section">
+<h3>Grados y función</h3>
+<div id="degreesPanel" class="panel-empty">Aquí aparecerán los grados armónicos de la progresión seleccionada.</div>
+</section>
+<section class="compact-options-section">
+<h3>Contexto</h3>
+<div id="exerciseContext"></div>
+</section>
+<section class="compact-options-section">
+<h3>En obras reales</h3>
+<div id="composerContext">Acierta una progresion para ver compositores y obras relacionadas.</div>
+</section>
+</div>
+</section>
+</main>
+
+<aside class="sidebar">
+<div class="stats-header">
+<span>Diagnostico</span>
+<span id="sessionModeBadge">Manual</span>
+</div>
+
+<section class="sidebar-section">
+    <h3>Ajustes de Audio</h3>
+    <div id="volumeControls">
+        <div class="audio-control">
+            <label for="pianoVol">Piano</label>
+            <input type="range" id="pianoVol" min="0" max="100" value="80">
+        </div>
+        <div class="audio-control" style="display:none;">
+            <label for="choirVol">Voces</label>
+            <input type="range" id="choirVol" min="0" max="100" value="70">
+        </div>
+        <div class="audio-control" style="display:none;">
+            <label for="stringsVol">Cuerdas</label>
+            <input type="range" id="stringsVol" min="0" max="100" value="70">
+        </div>
+    </div>
+</section>
+
+<section class="sidebar-section">
+    <h3>Progreso</h3>
+<div class="progress-bar">
+<div id="progressFill" class="progress-fill"></div>
+</div>
+<div id="statsSummary"></div>
+</section>
+
+<section class="sidebar-section maestro-section">
+<button id="maestroBtn" class="maestro-btn">Consultar al Maestro</button>
+<div id="maestroPanel" class="maestro-panel hidden">
+  <div class="maestro-panel-header">
+    <span>Maestro de Musica</span>
+    <button id="maestroClose" class="maestro-close">&times;</button>
+  </div>
+  <div id="maestroContent" class="maestro-content">
+    <p class="maestro-placeholder">La IA analizara tu progreso con progresiones armonicas.</p>
+  </div>
+  <div id="maestroLoading" class="maestro-loading hidden">Pensando...</div>
+  <div id="maestroError" class="maestro-error hidden"></div>
+  <div class="maestro-question-box">
+    <label for="maestroPregunta" class="maestro-question-label">Hazle una pregunta</label>
+    <textarea id="maestroPregunta" class="maestro-question-input" rows="3" placeholder="Ejemplo: Maestro, como escuchar mejor la funcion tonal?"></textarea>
+    <button id="maestroAskBtn" class="maestro-ask-btn">Preguntar</button>
+  </div>
+</div>
+</section>
+
+</aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vexflow/4.2.3/vexflow-min.js"></script>
+
+<script src="../../../core/teoria/notas.js"></script>
+<script src="../../../core/teoria/intervalos.js"></script>
+<script src="../../../core/teoria/escalas.js"></script>
+<script src="../../../core/teoria/tonalidades.js"></script>
+<script src="../../../core/teoria/tipos-acorde.js"></script>
+<script src="../../../core/teoria/voicings.js"></script>
+<script src="../../../core/teoria/acordes.js"></script>
+<script src="../../../core/teoria/inversiones.js"></script>
+<script src="../../../core/teoria/progresiones-data.js"></script>
+<script src="../../../core/teoria/armonia.js?v=8"></script>
+<script src="../../../core/teoria/teoria.js?v=8"></script>
+
+<script src="../../../core/notacion/vexflow-setup.js?v=5"></script>
+
+<script src="../../../entrenamiento/perfil.js"></script>
+<script src="../../../entrenamiento/audio-engine.js"></script>
+<script src="../../../entrenamiento/ai-engine.js"></script>
+<script src="../../../entrenamiento/llm-maestro.js"></script>
+<script src="../../../entrenamiento/pistas.js?v=2"></script>
+<script src="../../../entrenamiento/generador-progresiones.js?v=10"></script>
+<script src="../../../entrenamiento/evaluador-respuesta.js"></script>
+
+<script src="./identificacion-progresiones.js?v=20"></script>
+</body>
+</html>

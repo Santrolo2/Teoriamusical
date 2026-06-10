@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Entrenador de Piano - Modo Experto</title>
+    
+    <!-- Fuentes Globales -->
+    <link href="https://fonts.googleapis.com/css2?family=Georgia:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Estilo Principal -->
+    <link rel="stylesheet" href="estilo.css?v=3">
+    
+    <!-- Dependencias Externas Básicas -->
+    <script src="https://cdn.jsdelivr.net/npm/vexflow/build/cjs/vexflow.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.40/Tone.js"></script>
+</head>
+<body>
+
+    <!-- ==========================================
+         PANTALLA DE SELECCIÓN DE MODOS (LANDING)
+         ========================================== -->
+    <div id="landingScreen" class="landing-screen active">
+        <h1>Maestro de Piano</h1>
+        <p class="subtitle">Selecciona tu método de práctica</p>
+
+        <div class="modes-container">
+            <!-- Modo 1: Revisión Típica -->
+            <div class="mode-card" data-target="fingering">
+                <i class="fas fa-music mode-icon"></i>
+                <h2>Revisar Digitación por Acorde</h2>
+                <p>Construye acordes manualmente y obtén la partitura, el audio y la sugerencia de digitación ergonómica.</p>
+            </div>
+
+            <!-- Modo 2: Escáner OCR -->
+            <div class="mode-card" data-target="ocr">
+                <i class="fas fa-camera mode-icon"></i>
+                <h2>Modo OCR (Escáner)</h2>
+                <p>Sube una foto de una partitura. La Inteligencia Artificial extraerá las notas y te dará la digitación.</p>
+            </div>
+
+            <!-- Modo 3: Práctica Estructurada -->
+            <div class="mode-card" data-target="exercise">
+                <i class="fas fa-dumbbell mode-icon"></i>
+                <h2>Practicar Patrones de Digitación</h2>
+                <p>Identifica auditiva y visualmente diferentes acordes en niveles de dificultad progresivos.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         INTERFAZ PRINCIPAL DEL ENTRENADOR
+         ========================================== -->
+    <div id="mainInterface" class="app-layout hidden">
+        
+        <!-- PANEL CENTRAL (CONTENIDO PRINCIPAL) -->
+        <main class="main-panel">
+            <header class="exercise-header">
+                <div class="exercise-title">
+                    <i class="fas fa-music"></i>
+                    <h1>Piano</h1>
+                    <span class="badge" id="modeLabel">Módulo Piano</span>
+                </div>
+                <div class="mode-controls">
+                    <button id="backToLandingBtn" class="theme-btn" title="Volver al Menú">
+                        <i class="fas fa-arrow-left"></i> Menú de Modos
+                    </button>
+                    <button id="modeToggle" class="theme-btn">
+                        <i class="fas fa-sync-alt"></i> Cambiar Modo
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENEDORES DE MODO -->
+            <div id="modeContainers">
+                
+                <!-- =============== MODO 1: FINGERING =============== -->
+                <section id="fingeringMode" class="mode-section hidden">
+                    <div class="selector-block manual-notes">
+                        <h3>Construcción Rápida (Estilo Core)</h3>
+                        <label for="manualNotesInput">Ingresa notas manualmente (ej: C4,E4,G4):</label>
+                        <input type="text" id="manualNotesInput" placeholder="Separadas por coma...">
+                        <button id="renderManualNotesBtn" class="btn-secondary">Renderizar Notas</button>
+                    </div>
+
+                    <div class="selector-block manual-controls">
+                          <!-- Controles Tabulados de Constructor de Acordes -->
+                    <div class="chord-builder-tabs">
+                        <button id="tabStepByStep" class="tab-btn active">Construcción Paso a Paso</button>
+                        <button id="tabTextInput" class="tab-btn">Texto Directo</button>
+                    </div>
+
+                    <!-- Pestaña 1: Construcción Paso a Paso -->
+                    <div id="panelStepByStep" class="chord-builder-panel active">
+                        <div class="controls-grid">
+                            <div class="selector-block" style="grid-column: 1 / -1;">
+                                <h3>Número de Notas</h3>
+                                <div class="number-control">
+                                    <button class="icon-btn" id="btnNotesDown"><i class="fas fa-minus"></i></button>
+                                    <span id="labelNumNotes" class="value-display">3</span>
+                                    <button class="icon-btn" id="btnNotesUp"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenedor dinámico de notas individuales -->
+                        <div id="dynamicNotesContainer" class="dynamic-notes-list">
+                            <!-- Las filas con controles de nota (+/- semitono) se generarán aquí con JS -->
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 2: Entrada de Texto Directa -->
+                    <div id="panelTextInput" class="chord-builder-panel hidden">
+                        <div class="controls-grid">
+                            <div class="selector-block">
+                                <h3>Nombre de Acorde</h3>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="text" id="inputChordText" class="text-input" placeholder="Ej. Cmaj7" autocomplete="off" style="flex: 1;">
+                                </div>
+                                <span class="help-text">Soporta cifrado anglosajón, inversiones naturales y alteraciones.</span>
+                            </div>
+                            <div class="selector-block">
+                                <h3>Octava Base</h3>
+                                <div class="number-control">
+                                    <button class="icon-btn" id="btnOctaveDown"><i class="fas fa-minus"></i></button>
+                                    <span id="labelFastOctave" class="value-display">4</span>
+                                    <button class="icon-btn" id="btnOctaveUp"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+
+                    <div class="staff-actions">
+                        <button id="buildChordBtn" class="btn-primary"><i class="fas fa-hammer"></i> Construir Acorde</button>
+                        <button id="randomChordBtn" class="btn-secondary"><i class="fas fa-random"></i> Acorde Aleatorio</button>
+                    </div>
+
+                    <div class="compact-staff-section">
+                        <div class="compact-chord-info">
+                            <h2 id="chordName">Acorde</h2>
+                            <p id="chordSubtitle">Inversión 0</p>
+                        </div>
+                        <div id="stave" class="stave-host"></div>
+                    </div>
+
+                    <div class="staff-actions">
+                        <button id="playBtn" class="btn-primary"><i class="fas fa-play"></i> Escuchar Completo</button>
+                        <button id="arpeggioBtn" class="btn-primary"><i class="fas fa-water"></i> Arpegiar</button>
+                        <button id="showFingeringBtn" class="btn-secondary"><i class="fas fa-hand-paper"></i> Mostrar Digitación</button>
+                        <button id="nextChordBtn" class="btn-primary"><i class="fas fa-step-forward"></i> Siguiente</button>
+                    </div>
+
+                    <div id="fingeringPanel" class="context-card hidden">
+                        <h3><i class="fas fa-info-circle"></i> Sugerencia de Digitación Ergonómica</h3>
+                        <p id="fingeringDisplay" style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;"></p>
+                        <p id="fingeringDetails"></p>
+                    </div>
+                </section>
+
+                <!-- =============== MODO 2: OCR =============== -->
+                <section id="ocrMode" class="mode-section hidden">
+                    <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Subir foto de partitura</h3>
+                        <span>JPG, PNG. Max 5MB</span>
+                        <input type="file" id="imageInput" accept="image/*">
+                    </div>
+
+                    <div id="imagePreview" class="image-preview hidden">
+                        <img id="previewImg" src="" alt="Vista previa">
+                        <div class="image-actions">
+                            <button id="analyzeBtn" class="btn-primary" disabled><i class="fas fa-robot"></i> Analizar (IA)</button>
+                            <button id="clearImageBtn" class="btn-outline"><i class="fas fa-times"></i> Limpiar</button>
+                        </div>
+                    </div>
+
+                    <div class="selector-block">
+                        <h3>Motor de IA Preferido</h3>
+                        <select id="ocrEngine" class="select-control">
+                            <option value="oemer">Oemer OMR (Local/Especializado)</option>
+                        </select>
+                    </div>
+
+                    <div id="ocrLoading" class="loading-indicator hidden">
+                        <div class="spinner"></div>
+                        <p>La IA está analizando los pixeles y reconociendo notas...</p>
+                    </div>
+
+                    <div id="ocrResults" class="ocr-results hidden">
+                        <h3><i class="fas fa-check-circle"></i> Resultados del Análisis</h3>
+                        <div id="ocrAnalysis" class="analysis-data"></div>
+                        
+                        <h4 style="margin-top: 15px; color: #722f37;">Sugerencias Extras:</h4>
+                        <div id="ocrSuggestions" class="suggestions-data"></div>
+                        
+                        <div id="ocrFingering" class="context-card hidden" style="margin-top: 15px;">
+                            <h3>Digitación Calculada Automáticamente:</h3>
+                            <p id="ocrFingeringDisplay" style="font-size: 1.5rem; font-weight: bold; margin: 5px 0;"></p>
+                        </div>
+                        
+                        <button id="playOcrBtn" class="btn-primary" style="margin-top: 15px;" disabled><i class="fas fa-play"></i> Reproducir Notas Halladas</button>
+                    </div>
+                </section>
+
+                <!-- =============== MODO 3: EJERCICIOS =============== -->
+                <section id="exerciseMode" class="mode-section hidden">
+                    <div class="exercise-status">
+                        <h3 id="exerciseObjective">Cargando objetivo...</h3>
+                    </div>
+
+                    <div class="compact-staff-section">
+                        <div id="exerciseStave" class="stave-host"></div>
+                    </div>
+
+                    <div class="staff-actions" style="margin-bottom: 20px;">
+                        <button id="playExerciseBtn" class="btn-primary"><i class="fas fa-headphones"></i> Escuchar Acorde</button>
+                        <button id="hintExerciseBtn" class="btn-outline"><i class="fas fa-lightbulb"></i> Pista</button>
+                        <button id="nextExerciseBtn" class="btn-secondary" style="grid-column: span 2;"><i class="fas fa-forward"></i> Saltar al Siguiente</button>
+                    </div>
+
+                    <div class="selector-block manual-controls">
+                        <div>
+                            <h3>Raíz</h3>
+                            <select id="exerciseRoot" class="select-control"></select>
+                        </div>
+                        <div>
+                            <h3>Tipo</h3>
+                            <select id="exerciseType" class="select-control"></select>
+                        </div>
+                        <div>
+                            <h3>Inversión</h3>
+                            <select id="exerciseInversion" class="select-control">
+                                <option value="0">Fundamental</option>
+                                <option value="1">1ra Inv</option>
+                                <option value="2">2da Inv</option>
+                                <option value="3">3ra Inv</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="checkExerciseBtn" class="btn-primary"><i class="fas fa-check"></i> Comprobar Respuesta</button>
+
+                    <div id="exerciseFeedbackText" class="empty"></div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- PANEL LATERAL (SIDEBAR) -->
+        <aside class="sidebar">
+            <section class="sidebar-section">
+                <h3>Contexto Actual</h3>
+                <div class="context-card" id="exerciseContext">
+                    <div class="context-row">
+                        <span class="context-label">Modo Activo</span>
+                        <span class="context-value" id="currentMode">Cargando...</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Acorde en pantalla</span>
+                        <span class="context-value" id="currentChord">-</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Nivel de Ejercicio</span>
+                        <span class="context-value" id="currentExercise">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="sidebar-section">
+                <h3>Opciones Globales</h3>
+                <div class="audio-control">
+                    <label for="pianoVol"><i class="fas fa-volume-up"></i> Volumen del Piano</label>
+                    <input type="range" id="pianoVol" min="0" max="100" value="80">
+                </div>
+            </section>
+
+            <section class="sidebar-section">
+                <h3>Atajos de Teclado</h3>
+                <div class="context-card">
+                    <div class="context-row"><span class="context-label">Espacio</span><span class="context-value">Reproducir</span></div>
+                    <div class="context-row"><span class="context-label">Enter</span><span class="context-value">Evaluar</span></div>
+                    <div class="context-row"><span class="context-label">Flecha Der</span><span class="context-value">Siguiente</span></div>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Scripts Core Project -->
+    <script src="../../core/teoria/notas.js?v=6"></script>
+    <script src="../../core/teoria/intervalos.js?v=6"></script>
+    <script src="../../core/teoria/escalas.js?v=6"></script>
+    <script src="../../core/teoria/inversiones.js?v=6"></script>
+    <script src="../../core/teoria/tipos-acorde.js?v=6"></script>
+    <script src="../../core/teoria/acordes.js?v=6"></script>
+    <script src="../../core/teoria/voicings.js?v=6"></script>
+    <script src="../../core/teoria/tonalidades.js?v=6"></script>
+    <script src="../../core/teoria/teoria.js?v=6"></script>
+    
+    <!-- Scripts Piano Core -->
+    <!-- ESTE ES EL ORDEN CORRECTO -->
+    <script src="../../core/piano/digitaciones.js?v=8"></script>
+    <script src="../../core/piano/ocr-sheet-music.js?v=9"></script>
+    
+    <script src="../../entrenamiento/audio-engine.js?v=8"></script>
+    <script src="../../core/notacion/vexflow-setup.js?v=8"></script>
+
+    <!-- Sistema de Entrenamiento -->
+    <script src="../../entrenamiento/perfil.js?v=8"></script>
+    <script src="../entrenamiento/identificacion-acordes/identificacion-acordes.js?v=8"></script>
+    <script src="../../entrenamiento/evaluador-respuesta.js?v=8"></script>
+    <script src="../../entrenamiento/generador-ejercicios.js?v=8"></script>
+
+    <!-- Script Principal del Entrenador de Piano -->
+    <script src="piano-trainer.js?v=8"></script>
+
+</body>
+</html>
