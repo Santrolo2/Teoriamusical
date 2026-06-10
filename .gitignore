@@ -2,6 +2,8 @@ node_modules/
 .env
 .DS_Store
 *.log
+*.db-shm
+*.db-wal
 .openclaw-secure-edit/
 __pycache__/
 *.pyc

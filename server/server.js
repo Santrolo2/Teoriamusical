@@ -239,8 +239,7 @@ async function analyzeWithOemer(imageDataUrl) {
     OEMER_PYTHON_BIN,
     "py",
     "python",
-    "python3",
-    "C:\\Users\\eltho\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe"
+    "python3"
   ].filter(Boolean);
 
   try {

@@ -1,18 +1,18 @@
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DatabaseSync } from "node:sqlite";
+import Database from "better-sqlite3";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const schemaPath = process.env.PROGRESSIONS_SCHEMA_PATH
   ? path.resolve(process.cwd(), process.env.PROGRESSIONS_SCHEMA_PATH)
-  : path.resolve(__dirname, "..", "..", "..", "schema_progressions.sql");
+  : path.resolve(__dirname, "..", "..", "schema_progressions.sql");
 
 const dbPath = process.env.PROGRESSIONS_DB_PATH
   ? path.resolve(process.cwd(), process.env.PROGRESSIONS_DB_PATH)
-  : path.resolve(__dirname, "..", "..", "..", "progressiones.db");
+  : path.resolve(__dirname, "..", "..", "progressiones.db");
 
 async function main() {
   const rawSql = await readFile(schemaPath, "utf8");
@@ -43,7 +43,7 @@ async function main() {
   );
 
   await rm(dbPath, { force: true }).catch(() => {});
-  const db = new DatabaseSync(dbPath);
+  const db = new Database(dbPath);
 
   try {
     db.exec("PRAGMA foreign_keys = ON;");

@@ -114,6 +114,21 @@ VALUES
 (18, 1, 'C', 'C - Am - Bb - F - C', 'C - A - Bb - F - C', '/assets/notation/progressions/p18_k1.musicxml', '/assets/audio/progressions/p18_k1.mp3', 'Bucle mixto en C mayor.'),
 (18, 11, 'Bb', 'Bb - Gm - Ab - Eb - Bb', 'Bb - G - Ab - Eb - Bb', '/assets/notation/progressions/p18_k11.musicxml', '/assets/audio/progressions/p18_k11.mp3', 'Bucle mixto en Bb mayor.');
 
+-- 1.1) Completar progresiones Poulenc nuevas hasta el minimo pedagogico de 4 realizaciones.
+INSERT OR IGNORE INTO progression_realizations
+(progression_id, key_id, root_note, chord_sequence_absolute, bass_sequence, notation_ref, audio_demo_ref, notes)
+VALUES
+(14, 2, 'G', 'G - C - Am - D - G', 'G - C - A - D - G', '/assets/notation/progressions/p14_k2.musicxml', '/assets/audio/progressions/p14_k2.mp3', 'Poulenc plagal en G mayor.'),
+(14, 12, 'F', 'F - Bb - Gm - C - F', 'F - Bb - G - C - F', '/assets/notation/progressions/p14_k12.musicxml', '/assets/audio/progressions/p14_k12.mp3', 'Poulenc plagal en F mayor.'),
+(15, 3, 'D', 'D - F - G - D', 'D - F - G - D', '/assets/notation/progressions/p15_k3.musicxml', '/assets/audio/progressions/p15_k3.mp3', 'Color de tercera en D mayor.'),
+(15, 12, 'F', 'F - Ab - Bb - F', 'F - Ab - Bb - F', '/assets/notation/progressions/p15_k12.musicxml', '/assets/audio/progressions/p15_k12.mp3', 'Color de tercera en F mayor.'),
+(16, 13, 'A', 'Am - Dm - E - Am', 'A - D - E - A', '/assets/notation/progressions/p16_k13.musicxml', '/assets/audio/progressions/p16_k13.mp3', 'Giro menor en A menor.'),
+(16, 20, 'G', 'Gm - Cm - D - Gm', 'G - C - D - G', '/assets/notation/progressions/p16_k20.musicxml', '/assets/audio/progressions/p16_k20.mp3', 'Giro menor en G menor.'),
+(17, 2, 'G', 'G - A - D - G', 'G - A - D - G', '/assets/notation/progressions/p17_k2.musicxml', '/assets/audio/progressions/p17_k2.mp3', 'Color lidio en G mayor.'),
+(17, 12, 'F', 'F - G - C - F', 'F - G - C - F', '/assets/notation/progressions/p17_k12.musicxml', '/assets/audio/progressions/p17_k12.mp3', 'Color lidio en F mayor.'),
+(18, 2, 'G', 'G - Em - F - C - G', 'G - E - F - C - G', '/assets/notation/progressions/p18_k2.musicxml', '/assets/audio/progressions/p18_k2.mp3', 'Bucle mixto en G mayor.'),
+(18, 12, 'F', 'F - Dm - Eb - Bb - F', 'F - D - Eb - Bb - F', '/assets/notation/progressions/p18_k12.musicxml', '/assets/audio/progressions/p18_k12.mp3', 'Bucle mixto en F mayor.');
+
 -- 2) Variante por defecto para realizaciones nuevas (solo si faltan)
 INSERT OR IGNORE INTO realization_variants
 (realization_id, variant_code, voicing_label, texture, rhythmic_pattern, tempo_bpm, chord_sequence_absolute, bass_sequence, notation_ref, audio_demo_ref, is_default)

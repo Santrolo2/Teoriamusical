@@ -57,8 +57,8 @@ npm run db:phase2
 Variables opcionales:
 
 ```env
-PROGRESSIONS_DB_PATH=../../progressiones.db
-PROGRESSIONS_SCHEMA_PATH=../../schema_progressions.sql
+PROGRESSIONS_DB_PATH=../progressiones.db
+PROGRESSIONS_SCHEMA_PATH=../schema_progressions.sql
 PROGRESSIONS_PHASE1_MIGRATION_PATH=./sql/progressions-phase1-migration.sql
 PROGRESSIONS_PHASE1_SEED_PATH=./sql/progressions-phase1-seed.sql
 PROGRESSIONS_PHASE2_SEED_PATH=./sql/progressions-phase2-seed.sql

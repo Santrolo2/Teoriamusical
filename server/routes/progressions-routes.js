@@ -616,6 +616,207 @@ router.get("/realizations/:id/variants", (req, res) => {
   }
 });
 
+router.get("/progressions/:id/study-pack", (req, res) => {
+  try {
+    const flags = detectFeatures();
+    const id = toInt(req.params.id);
+    if (id == null) {
+      return res.status(400).json({ ok: false, error: "ID invalido." });
+    }
+
+    const progression = get(
+      `
+      SELECT
+        p.*,
+        c.full_name AS composer_name,
+        c.nationality AS composer_nationality,
+        pe.name AS period_name,
+        s.name AS style_name
+      FROM progressions p
+      JOIN composers c ON c.id = p.composer_id
+      LEFT JOIN periods pe ON pe.id = c.period_id
+      LEFT JOIN styles s ON s.id = p.style_id
+      WHERE p.id = ?
+      `,
+      [id]
+    );
+
+    if (!progression) {
+      return res.status(404).json({ ok: false, error: "Progresion no encontrada." });
+    }
+
+    const pedagogy = flags.pedagogy
+      ? get(
+          `
+          SELECT
+            progression_id,
+            level,
+            objective,
+            hearing_focus,
+            voice_leading_focus,
+            keyboard_focus,
+            unlock_order,
+            is_core,
+            estimated_minutes
+          FROM progression_pedagogy
+          WHERE progression_id = ?
+          `,
+          [id]
+        ) || null
+      : null;
+
+    const commonErrors = flags.commonErrors
+      ? all(
+          `
+          SELECT
+            id,
+            progression_id,
+            error_code,
+            error_description,
+            hint_subtle,
+            hint_technical,
+            hint_full,
+            priority
+          FROM progression_common_errors
+          WHERE progression_id = ?
+          ORDER BY priority ASC, id ASC
+          `,
+          [id]
+        )
+      : [];
+
+    const degrees = all(
+      `
+      SELECT
+        d.id,
+        d.progression_id,
+        d.degree_order,
+        d.roman_numeral,
+        d.chord_quality,
+        d.inversion,
+        d.chord_symbol_relative,
+        d.expected_resolution,
+        d.degree_role,
+        d.expressive_color,
+        d.stability_level,
+        f.name AS harmonic_function_name,
+        f.short_code AS harmonic_function_code
+      FROM progression_degrees d
+      LEFT JOIN harmonic_functions f ON f.id = d.harmonic_function_id
+      WHERE d.progression_id = ?
+      ORDER BY d.degree_order ASC
+      `,
+      [id]
+    );
+
+    const realizations = all(
+      `
+      SELECT
+        r.id,
+        r.progression_id,
+        r.key_id,
+        k.display_name AS key_name,
+        k.tonic AS key_tonic,
+        k.mode AS key_mode,
+        r.root_note,
+        r.chord_sequence_absolute,
+        r.bass_sequence,
+        r.midi_export_ref,
+        r.audio_demo_ref,
+        r.notation_ref,
+        r.notes,
+        CASE WHEN COALESCE(r.audio_demo_ref, '') <> '' THEN 1 ELSE 0 END AS has_audio,
+        CASE WHEN COALESCE(r.notation_ref, '') <> '' THEN 1 ELSE 0 END AS has_notation,
+        ${flags.variants ? "(SELECT COUNT(*) FROM realization_variants rv WHERE rv.realization_id = r.id)" : "0"} AS variant_count
+      FROM progression_realizations r
+      JOIN keys k ON k.id = r.key_id
+      WHERE r.progression_id = ?
+      ORDER BY k.display_name ASC
+      `,
+      [id]
+    );
+
+    const variants = flags.variants
+      ? all(
+          `
+          SELECT
+            rv.id,
+            rv.realization_id,
+            rv.variant_code,
+            rv.voicing_label,
+            rv.texture,
+            rv.rhythmic_pattern,
+            rv.tempo_bpm,
+            rv.chord_sequence_absolute,
+            rv.bass_sequence,
+            rv.notation_ref,
+            rv.audio_demo_ref,
+            rv.difficulty_delta,
+            rv.is_default
+          FROM realization_variants rv
+          JOIN progression_realizations r ON r.id = rv.realization_id
+          WHERE r.progression_id = ?
+          ORDER BY rv.realization_id ASC, rv.is_default DESC, rv.id ASC
+          `,
+          [id]
+        )
+      : [];
+
+    const works = all(
+      `
+      SELECT
+        w.id,
+        w.title,
+        w.catalogue_reference,
+        w.year_composed,
+        w.genre,
+        e.section_label,
+        e.measure_start,
+        e.measure_end,
+        e.commentary
+      FROM progression_work_examples e
+      JOIN works w ON w.id = e.work_id
+      WHERE e.progression_id = ?
+      ORDER BY COALESCE(w.year_composed, 9999), w.title ASC
+      `,
+      [id]
+    );
+
+    const coverage = flags.coverageView
+      ? get(
+          `
+          SELECT
+            progression_id,
+            used_keys,
+            total_keys_in_mode,
+            realizations_with_audio,
+            realizations_with_notation,
+            variant_count
+          FROM vw_progression_coverage
+          WHERE progression_id = ?
+          `,
+          [id]
+        ) || null
+      : null;
+
+    res.json({
+      ok: true,
+      data: {
+        progression,
+        pedagogy,
+        common_errors: commonErrors,
+        degrees,
+        realizations,
+        variants,
+        works,
+        coverage
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 router.get("/coverage/summary", (req, res) => {
   try {
     const flags = detectFeatures();
